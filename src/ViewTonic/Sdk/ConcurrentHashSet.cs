@@ -1,4 +1,4 @@
-﻿namespace ViewTonic.Persistence.Sdk
+﻿namespace ViewTonic.Sdk
 {
     using System;
     using System.Collections;

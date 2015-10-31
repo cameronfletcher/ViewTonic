@@ -1,4 +1,4 @@
-﻿namespace ViewTonic.Tests
+﻿namespace ViewTonic.Tests.Sdk
 {
     using System;
     using FluentAssertions;
@@ -6,11 +6,11 @@
     using ViewTonic.Persistence.Memory;
     using Xunit;
 
-    public abstract class BasicRepositoryTests
+    public abstract class RepositoryTests
     {
         private readonly IRepository<string, string> repository;
 
-        protected BasicRepositoryTests(IRepository<string, string> repository)
+        protected RepositoryTests(IRepository<string, string> repository)
         {
             this.repository = repository;
         }

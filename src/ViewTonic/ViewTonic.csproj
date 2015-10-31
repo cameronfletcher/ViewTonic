@@ -35,14 +35,16 @@
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
     <Compile Include="Guard.cs" />
-    <Compile Include="Persistence\Sdk\ConcurrentHashSet.cs" />
-    <Compile Include="Persistence\Sdk\DefaultSequenceNumberResolver.cs" />
+    <Compile Include="GuardExtensions.cs" />
+    <Compile Include="Sdk\IntelligentBuffer.cs" />
+    <Compile Include="Sdk\ConcurrentHashSet.cs" />
+    <Compile Include="Sdk\DefaultSequenceNumberResolver.cs" />
     <Compile Include="EventDispatcher.cs" />
     <Compile Include="IEventDispatcher.cs" />
-    <Compile Include="Persistence\Sdk\ISequenceNumberResolver.cs" />
+    <Compile Include="Sdk\ISequenceNumberResolver.cs" />
     <Compile Include="Persistence\IRepository.cs" />
     <Compile Include="Persistence\Memory\MemoryRepository.cs" />
-    <Compile Include="Persistence\Sdk\RepositoryBase.cs" />
+    <Compile Include="Sdk\OrderedBuffer.cs" />
     <Compile Include="xProgram.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Persistence\Hybrid\HybridRepository.cs" />

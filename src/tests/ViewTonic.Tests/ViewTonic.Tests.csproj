@@ -34,11 +34,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="HybridRepositoryTests.cs" />
-    <Compile Include="MemoryRepositoryTests.cs" />
-    <Compile Include="BasicRepositoryTests.cs" />
+    <Compile Include="Unit\HybridRepositoryTests.cs" />
+    <Compile Include="Unit\MemoryRepositoryTests.cs" />
+    <Compile Include="Sdk\RepositoryTests.cs" />
+    <Compile Include="Unit\OrderedBufferTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="Persistence\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>

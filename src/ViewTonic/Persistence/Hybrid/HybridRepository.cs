@@ -7,7 +7,7 @@ namespace ViewTonic.Persistence.Hybrid
     using System;
     using System.Collections.Generic;
     using System.Threading;
-    using ViewTonic.Persistence.Sdk;
+    using ViewTonic.Sdk;
 
     public sealed class HybridRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>
         where TEntity : class
@@ -17,7 +17,7 @@ namespace ViewTonic.Persistence.Hybrid
         private readonly ConcurrentSet<TIdentity> removedFromWorkingCache = new ConcurrentSet<TIdentity>();
         private readonly ConcurrentSet<TIdentity> removedFromTemporaryCache = new ConcurrentSet<TIdentity>();
 
-        // NOTE (Cameron): There is the potential to introduce a second lock here for the working cache but I'm not sure it's necessary.
+        // NOTE (Cameron): There is the potential to introduce a second lock here for flushing the working cache but I'm not sure it's necessary.
         private readonly ReaderWriterLockSlim @lock = new ReaderWriterLockSlim();
 
         private readonly IRepository<TIdentity, TEntity> repository;

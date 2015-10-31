@@ -1,4 +1,4 @@
-﻿namespace ViewTonic.Tests
+﻿namespace ViewTonic.Tests.Unit
 {
     using ViewTonic.Persistence.Hybrid;
     using ViewTonic.Persistence.Memory;
@@ -7,8 +7,9 @@
     using ViewTonic.Persistence;
     using System.Collections.Generic;
     using System.Threading;
+    using ViewTonic.Tests.Sdk;
 
-    public class HybridRepositoryTests : BasicRepositoryTests
+    public class HybridRepositoryTests : RepositoryTests
     {
         private const string Add = "ADD";
         private const string Update = "UPDATE";
