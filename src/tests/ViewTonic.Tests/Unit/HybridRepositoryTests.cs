@@ -100,6 +100,8 @@
             add.Should().Be("add");
             update.Should().Be("update_changed");
             remove.Should().BeNull();
+
+            flush.Dispose();
         }
 
         [Fact]
@@ -130,6 +132,8 @@
             add.Should().Be("add");
             update.Should().Be("update_changed");
             remove.Should().BeNull();
+
+            flush.Dispose();
         }
 
         [Fact]
@@ -160,6 +164,8 @@
             add.Should().Be("add");
             update.Should().Be("update_changed");
             remove.Should().BeNull();
+
+            flush.Dispose();
         }
 
         [Fact]
@@ -292,6 +298,10 @@
             injectedRepository.Get("B").Should().BeNull("ref23");
             injectedRepository.Get("C").Should().Be("C_changed", "ref24");
             injectedRepository.Get("D").Should().Be("D", "ref25");
+
+            flush.Dispose();
+            flushContinue.Dispose();
+            flushEnd.Dispose();
         }
 
         private class TestRepository : IRepository<string, string>

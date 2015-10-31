@@ -1,5 +1,7 @@
 ﻿namespace ViewTonic.Tests.Unit
 {
+    using System;
+    using System.Threading;
     using FluentAssertions;
     using ViewTonic.Sdk;
     using Xunit;
@@ -132,5 +134,60 @@
             item.Value.Should().Be(expectedValue);
         }
 
+        [Fact]
+        public void CanGetItemFromBufferOnBlockingThread()
+        {
+            // arrange
+            var buffer = new OrderedBuffer(2);
+            var expectedValue = "expected";
+            OrderedBuffer.Item item;
+            var token = new CancellationToken();
+
+            // act
+            new Thread(
+                () =>
+                {
+                    buffer.Add(1, "value");
+                    buffer.Add(2, "value2");
+                    buffer.Add(3, expectedValue);
+                }).Start();
+
+            item = buffer.Take(token);
+
+            // assert
+            item.Should().NotBeNull();
+            item.SequenceNumber.Should().Be(3);
+            item.Value.Should().Be(expectedValue);
+        }
+
+        [Fact]
+        public void CanCancelBlockingTake()
+        {
+            // arrange
+            var takeComplete = new ManualResetEvent(false);
+            var buffer = new OrderedBuffer(2);
+            OrderedBuffer.Item item = null;
+            var tokenSource = new CancellationTokenSource();
+
+            // act
+            new Thread(
+                () =>
+                {
+                    try
+                    {
+                        item = buffer.Take(tokenSource.Token);
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        takeComplete.Set();
+                    }
+                }).Start();
+
+            tokenSource.Cancel();
+            takeComplete.WaitOne();
+
+            // assert
+            item.Should().BeNull();
+        }
     }
 }

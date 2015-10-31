@@ -5,12 +5,14 @@
 namespace ViewTonic.Sdk
 {
     using System.Collections.Concurrent;
-    using System.Collections.Generic;
+    using System.Threading;
 
     public class OrderedBuffer
     {
         private readonly ConcurrentDictionary<long, Item> buffer = new ConcurrentDictionary<long, Item>();
-        private readonly ConcurrentQueue<Item> queue = new ConcurrentQueue<Item>();
+        private readonly BlockingCollection<Item> queue = new BlockingCollection<Item>();
+
+        private readonly object @lock = new object();
 
         private long nextSequenceNumber;
 
@@ -18,7 +20,7 @@ namespace ViewTonic.Sdk
         {
             Guard.Against.Negative(() => sequenceNumber);
 
-            this.nextSequenceNumber = sequenceNumber + 1;
+            this.nextSequenceNumber =  sequenceNumber + 1;
         }
 
         public void Add(long sequenceNumber, object value)
@@ -26,9 +28,9 @@ namespace ViewTonic.Sdk
             Guard.Against.Negative(() => sequenceNumber);
             Guard.Against.Null(() => value);
 
-            if (sequenceNumber < this.nextSequenceNumber)
+            if (sequenceNumber < this.nextSequenceNumber || this.buffer.ContainsKey(sequenceNumber))
             {
-                // NOTE (Cameron): We have already processed this event.
+                // NOTE (Cameron): We have already buffered this item.
                 return;
             }
 
@@ -38,26 +40,34 @@ namespace ViewTonic.Sdk
                 Value = value,
             };
 
-            if (sequenceNumber > this.nextSequenceNumber)
+            lock (@lock)
             {
-                // NOTE (Cameron): An out-of-order item is being buffered.
-                this.buffer.TryAdd(sequenceNumber, item);
-                return;
-            }
+                if (sequenceNumber != this.nextSequenceNumber)
+                {
+                    this.buffer.TryAdd(sequenceNumber, item);
+                    return;
+                }
 
-            this.queue.Enqueue(item);
-            this.nextSequenceNumber++;
+                this.queue.Add(item);
+                this.nextSequenceNumber = sequenceNumber + 1;
 
-            Item nextItem = null;
-            while (this.buffer.TryRemove(nextSequenceNumber, out nextItem))
-            {
-                this.queue.Enqueue(nextItem);
+                while (this.buffer.TryRemove(this.nextSequenceNumber, out item))
+                {
+                    this.queue.Add(item);
+                }
             }
+        }
+
+        public Item Take(CancellationToken cancellationToken)
+        {
+            Item value = null;
+            this.queue.TryTake(out value, -1, cancellationToken);
+            return value;
         }
 
         public bool TryTake(out Item value)
         {
-            return this.queue.TryDequeue(out value);
+            return this.queue.TryTake(out value, 0);
         }
 
         // TODO (Cameron): Consider struct?
