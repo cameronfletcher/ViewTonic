@@ -1,4 +1,4 @@
-﻿// <copyright file="IntelligentBuffer.cs" company="ViewTonic contributors">
+﻿// <copyright file="OrderedBuffer.cs" company="ViewTonic contributors">
 //  Copyright (c) ViewTonic contributors. All rights reserved.
 // </copyright>
 
@@ -14,13 +14,23 @@ namespace ViewTonic.Sdk
 
         private readonly object @lock = new object();
 
-        private long nextSequenceNumber;
-
         public OrderedBuffer(long sequenceNumber)
         {
             Guard.Against.Negative(() => sequenceNumber);
 
-            this.nextSequenceNumber =  sequenceNumber + 1;
+            this.NextSequenceNumber =  sequenceNumber + 1;
+        }
+
+        protected long NextSequenceNumber { get; private set; }
+
+        protected bool HasItemsBuffered
+        {
+            get { return !this.buffer.IsEmpty; }
+        }
+
+        protected bool HasItemsQueued
+        {
+            get { return this.queue.Count > 0; }
         }
 
         public void Add(long sequenceNumber, object value)
@@ -28,32 +38,35 @@ namespace ViewTonic.Sdk
             Guard.Against.Negative(() => sequenceNumber);
             Guard.Against.Null(() => value);
 
-            if (sequenceNumber < this.nextSequenceNumber || this.buffer.ContainsKey(sequenceNumber))
-            {
-                // NOTE (Cameron): We have already buffered this item.
-                return;
-            }
-
-            var item = new Item
-            {
-                SequenceNumber = sequenceNumber,
-                Value = value,
-            };
-
             lock (@lock)
             {
-                if (sequenceNumber != this.nextSequenceNumber)
+                if (sequenceNumber < this.NextSequenceNumber || this.buffer.ContainsKey(sequenceNumber))
                 {
-                    this.buffer.TryAdd(sequenceNumber, item);
+                    // NOTE (Cameron): We have already buffered this item.
+                    return;
+                }
+
+                var item = new Item
+                {
+                    SequenceNumber = sequenceNumber,
+                    Value = value,
+                };
+
+                if (sequenceNumber != this.NextSequenceNumber)
+                {
+                    this.buffer.TryAdd(item.SequenceNumber, item);
+                    this.ItemAddedToBuffer(item.SequenceNumber);
                     return;
                 }
 
                 this.queue.Add(item);
-                this.nextSequenceNumber = sequenceNumber + 1;
+                this.NextSequenceNumber = sequenceNumber + 1;
 
-                while (this.buffer.TryRemove(this.nextSequenceNumber, out item))
+                while (this.buffer.TryRemove(this.NextSequenceNumber, out item))
                 {
                     this.queue.Add(item);
+                    this.ItemRemovedFromBuffer(item.SequenceNumber);
+                    this.NextSequenceNumber++;
                 }
             }
         }
@@ -65,9 +78,17 @@ namespace ViewTonic.Sdk
             return value;
         }
 
-        public bool TryTake(out Item value)
+        public virtual bool TryTake(out Item value)
         {
             return this.queue.TryTake(out value, 0);
+        }
+
+        protected virtual void ItemAddedToBuffer(long sequenceNumber)
+        {
+        }
+
+        protected virtual void ItemRemovedFromBuffer(long sequenceNumber)
+        {
         }
 
         // TODO (Cameron): Consider struct?

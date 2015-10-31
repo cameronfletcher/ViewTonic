@@ -34,9 +34,11 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Sdk\BufferTests.cs" />
     <Compile Include="Unit\HybridRepositoryTests.cs" />
     <Compile Include="Unit\MemoryRepositoryTests.cs" />
     <Compile Include="Sdk\RepositoryTests.cs" />
+    <Compile Include="Unit\IntelligentBufferTests.cs" />
     <Compile Include="Unit\OrderedBufferTests.cs" />
   </ItemGroup>
   <ItemGroup>

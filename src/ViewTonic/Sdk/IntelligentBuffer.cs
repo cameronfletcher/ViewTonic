@@ -5,72 +5,81 @@
 namespace ViewTonic.Sdk
 {
     using System;
-    using System.Collections.Concurrent;
     using System.Collections.Generic;
-    using ViewTonic.Sdk;
+    using System.Threading;
 
-    public sealed class IntelligentBuffer
+    public sealed class IntelligentBuffer : OrderedBuffer, IDisposable
     {
-        private readonly Dictionary<long, object> bufferedEvents = new Dictionary<long, object>();
-
-        private readonly BlockingCollection<SequencedItem> blockingCollection = new BlockingCollection<SequencedItem>();
+        private readonly HashSet<long> buffer = new HashSet<long>();
+        private readonly Timer timer;
 
         private readonly Func<long, object> resolver;
-        private readonly int resolverWaitTimeMilliseconds;
+        private readonly int publisherTimeout;
+        private readonly int consumerTimeout;
 
-        private long lastProcessed;
-
-        public IntelligentBuffer(Func<long, object> resolver, int resolverWaitTimeMilliseconds)
+        public IntelligentBuffer(long sequenceNumber, Func<long, object> resolver, int publisherTimeout, int consumerTimeout)
+            : base(sequenceNumber)
         {
             this.resolver = resolver;
-            this.resolverWaitTimeMilliseconds = resolverWaitTimeMilliseconds;
+            this.publisherTimeout = publisherTimeout;
+            this.consumerTimeout = consumerTimeout;
+
+
+            this.timer = new Timer(this.EnsureSmoothRunning, null, this.publisherTimeout, Timeout.Infinite);
         }
 
-        public void StartBufferring(long sequenceNumber)
+        protected override void ItemAddedToBuffer(long sequenceNumber)
         {
-            this.lastProcessed = sequenceNumber;
-
-            // wait 5 second before first check?
-            // reset background timer for last hit (every minute?)
+            this.buffer.Add(sequenceNumber);
         }
 
-        public void StopBufferring()
+        protected override void ItemRemovedFromBuffer(long sequenceNumber)
         {
-
+            this.buffer.Remove(sequenceNumber);
         }
 
-        public void Add(long sequenceNumber, object @event)
+        public override bool TryTake(out OrderedBuffer.Item value)
         {
-            // reset timer
-            if (sequenceNumber <= this.lastProcessed)
+            var success = base.TryTake(out value);
+            if (success)
             {
-                // NOTE (Cameron): We have already processed this event.
+                this.timer.Change(this.consumerTimeout, Timeout.Infinite);
+            }
+
+            return success;
+        }
+
+        public void Dispose()
+        {
+            if (this.timer != null)
+            {
+                this.timer.Dispose();
+            }
+        }
+
+        private void EnsureSmoothRunning(object state)
+        {
+            if (this.HasItemsQueued)
+            {
+                // NOTE (Cameron): Items are queued so there must be no consumers => stop checking until a dequeue operation takes place.
                 return;
             }
 
-            if (sequenceNumber > this.lastProcessed + 1)
+            // NOTE (Cameron): No items queued so we check the resolver for any additional items that were never added up to the first buffer hit.
+            var sequenceNumber = this.NextSequenceNumber;
+            object item;
+            do
             {
-                this.bufferedEvents.Add(sequenceNumber, @event.ToString());
-                // set timer
-                return;
+                item = this.resolver.Invoke(sequenceNumber);
+                if (item != null)
+                {
+                    this.Add(sequenceNumber, item);
+                    sequenceNumber++;
+                }
             }
+            while (item != null && !this.buffer.Contains(sequenceNumber));
 
-            // process
-        }
-
-        public object Take(out long sequenceNumber)
-        {
-            var item = this.blockingCollection.Take();
-            sequenceNumber = item.SequenceNumber;
-            return item.Value;
-        }
-
-        // TODO (Cameron): Consider struct?
-        private class SequencedItem
-        {
-            public long SequenceNumber { get; set; }
-
-            public object Value { get; set; }
+            this.timer.Change(this.publisherTimeout, Timeout.Infinite);
         }
     }
 }
