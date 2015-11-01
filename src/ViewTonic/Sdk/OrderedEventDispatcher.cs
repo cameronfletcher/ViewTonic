@@ -16,11 +16,6 @@ namespace ViewTonic.Sdk
 
         private bool isDisposed;
 
-        public OrderedEventDispatcher(ISequenceResolver sequenceResolver, IOrderedBuffer buffer)
-            : this(sequenceResolver, buffer, new DefaultEventDispatcher())
-        {
-        }
-
         public OrderedEventDispatcher(ISequenceResolver sequenceResolver, IOrderedBuffer buffer, IEventDispatcher innerEventDispatcher)
         {
             Guard.Against.Null(() => sequenceResolver);

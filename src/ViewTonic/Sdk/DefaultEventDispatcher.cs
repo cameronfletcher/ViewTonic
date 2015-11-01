@@ -8,15 +8,21 @@ namespace ViewTonic.Sdk
 
     public sealed class DefaultEventDispatcher : IEventDispatcher
     {
-        private readonly List<View> views = new List<View>();
+        private readonly List<View> views;
 
-        public DefaultEventDispatcher()
+        public DefaultEventDispatcher(IEnumerable<View> views)
         {
+            Guard.Against.Null(() => views);
+
+            this.views = new List<View>(views);
         }
 
         public void Dispatch(object @event)
         {
-            // efficiently dispatch to all views
+            foreach (var view in views)
+            {
+                view.Apply(@event);
+            }
         }
     }
 }

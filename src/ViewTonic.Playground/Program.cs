@@ -15,7 +15,7 @@
             var view1 = new Views.Thing(repository1);
             var view2 = new Views.Things(repository2, repository3);
 
-            IEventDispatcher eventDispatcher = null;
+            var eventDispatcher = EventDispatcher.Create(view1, view2);
 
             var events = new List<object>
             {
@@ -30,6 +30,7 @@
             {
                 eventDispatcher.Dispatch(@event);
             }
+
         }
     }
 }
