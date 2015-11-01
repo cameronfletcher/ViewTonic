@@ -1,4 +1,4 @@
-﻿// <copyright file="IntelligentBuffer.cs" company="ViewTonic contributors">
+﻿// <copyright file="IntelligentOrderedBuffer.cs" company="ViewTonic contributors">
 //  Copyright (c) ViewTonic contributors. All rights reserved.
 // </copyright>
 
@@ -8,7 +8,7 @@ namespace ViewTonic.Sdk
     using System.Collections.Generic;
     using System.Threading;
 
-    public sealed class IntelligentBuffer : OrderedBuffer, IDisposable
+    public sealed class IntelligentOrderedBuffer : OrderedBuffer, IDisposable
     {
         private readonly HashSet<long> buffer = new HashSet<long>();
         private readonly Timer timer;
@@ -17,7 +17,7 @@ namespace ViewTonic.Sdk
         private readonly int publisherTimeout;
         private readonly int consumerTimeout;
 
-        public IntelligentBuffer(long sequenceNumber, Func<long, object> resolver, int publisherTimeout, int consumerTimeout)
+        public IntelligentOrderedBuffer(long sequenceNumber, Func<long, object> resolver, int publisherTimeout, int consumerTimeout)
             : base(sequenceNumber)
         {
             this.resolver = resolver;
@@ -38,7 +38,7 @@ namespace ViewTonic.Sdk
             this.buffer.Remove(sequenceNumber);
         }
 
-        public override bool TryTake(out OrderedBuffer.Item value)
+        public override bool TryTake(out OrderedItem value)
         {
             var success = base.TryTake(out value);
             if (success)

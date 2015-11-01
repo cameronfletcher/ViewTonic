@@ -6,8 +6,6 @@ namespace ViewTonic
 {
     public class View
     {
-        private long sequenceNumber;
-
         internal void Consume<T>(T @event)
         {
 

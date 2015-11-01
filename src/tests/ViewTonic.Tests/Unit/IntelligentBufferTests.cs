@@ -9,7 +9,7 @@
     public class IntelligentBufferTests : BufferTests
     {
         public IntelligentBufferTests()
-            : base(new IntelligentBuffer(2, sequenceNumber => null, 1000, 1000))
+            : base(new IntelligentOrderedBuffer(2, sequenceNumber => null, 1000, 1000))
         {
         }
 
@@ -17,7 +17,7 @@
         public void CanResolveOnConsumerTimeout()
         {
             // arrange
-            var buffer = new IntelligentBuffer(2, sequenceNumber => string.Format(CultureInfo.InvariantCulture, "event{0}", sequenceNumber), 1000, 100);
+            var buffer = new IntelligentOrderedBuffer(2, sequenceNumber => string.Format(CultureInfo.InvariantCulture, "event{0}", sequenceNumber), 1000, 100);
 
             // act
             buffer.Add(4, "event4");
@@ -33,7 +33,7 @@
         public void CanResolveOnPublisherTimeout()
         {
             // arrange
-            var buffer = new IntelligentBuffer(
+            var buffer = new IntelligentOrderedBuffer(
                 2, 
                 sequenceNumber => (sequenceNumber == 3) ? string.Format(CultureInfo.InvariantCulture, "event{0}", sequenceNumber) : null, 
                 100, 

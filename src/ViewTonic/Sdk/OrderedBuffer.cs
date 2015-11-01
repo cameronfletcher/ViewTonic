@@ -7,10 +7,10 @@ namespace ViewTonic.Sdk
     using System.Collections.Concurrent;
     using System.Threading;
 
-    public class OrderedBuffer
+    public class OrderedBuffer : IOrderedBuffer
     {
-        private readonly ConcurrentDictionary<long, Item> buffer = new ConcurrentDictionary<long, Item>();
-        private readonly BlockingCollection<Item> queue = new BlockingCollection<Item>();
+        private readonly ConcurrentDictionary<long, OrderedItem> buffer = new ConcurrentDictionary<long, OrderedItem>();
+        private readonly BlockingCollection<OrderedItem> queue = new BlockingCollection<OrderedItem>();
 
         private readonly object @lock = new object();
 
@@ -46,7 +46,7 @@ namespace ViewTonic.Sdk
                     return;
                 }
 
-                var item = new Item
+                var item = new OrderedItem
                 {
                     SequenceNumber = sequenceNumber,
                     Value = value,
@@ -71,14 +71,14 @@ namespace ViewTonic.Sdk
             }
         }
 
-        public Item Take(CancellationToken cancellationToken)
+        public OrderedItem Take(CancellationToken cancellationToken)
         {
-            Item value = null;
+            OrderedItem value = null;
             this.queue.TryTake(out value, -1, cancellationToken);
             return value;
         }
 
-        public virtual bool TryTake(out Item value)
+        public virtual bool TryTake(out OrderedItem value)
         {
             return this.queue.TryTake(out value, 0);
         }
@@ -89,14 +89,6 @@ namespace ViewTonic.Sdk
 
         protected virtual void ItemRemovedFromBuffer(long sequenceNumber)
         {
-        }
-
-        // TODO (Cameron): Consider struct?
-        public class Item
-        {
-            public long SequenceNumber { get; set; }
-
-            public object Value { get; set; }
         }
     }
 }

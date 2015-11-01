@@ -1,4 +1,8 @@
-﻿namespace ViewTonic.Sdk
+﻿// <copyright file="ConcurrentSet.cs" company="ViewTonic contributors">
+//  Copyright (c) ViewTonic contributors. All rights reserved.
+// </copyright>
+
+namespace ViewTonic.Sdk
 {
     using System;
     using System.Collections;

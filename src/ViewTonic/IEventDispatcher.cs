@@ -6,6 +6,6 @@ namespace ViewTonic
 {
     public interface IEventDispatcher
     {
-        void Dispatch<T>(T @event);
+        void Dispatch(object @event);
     }
 }

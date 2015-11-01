@@ -1,12 +1,20 @@
-﻿
-using ViewTonic.Persistence;
-namespace ViewTonic
+﻿namespace ViewTonic
 {
+    using System.Collections.Generic;
+    using ViewTonic.Persistence;
+    using ViewTonic.Sdk;
+
     class xProgram
     {
         public void Do()
         {
-            var eventDispatcher = new EventDispatcher();
+            var sequenceResolver = new DefaultSequenceResolver();
+            var buffer = new Sdk.OrderedBuffer(0);
+            var eventDispatcher = new OrderedEventDispatcher(sequenceResolver, buffer);
+
+            buffer.Add(1, "x");
+
+            eventDispatcher.Dispatch(new AnEvent { SequenceNumber = 2, Value = "Two" });
             eventDispatcher.Dispatch(new AnEvent { SequenceNumber = 1, Value = "One" });
         }
     }

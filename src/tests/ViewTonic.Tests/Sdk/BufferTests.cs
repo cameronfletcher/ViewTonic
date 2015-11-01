@@ -19,7 +19,7 @@
         public void CannotGetItemFromBufferWithNoItems()
         {
             // arrange
-            OrderedBuffer.Item item;
+            OrderedItem item;
 
             // act
             var hasContents = this.buffer.TryTake(out item);
@@ -33,7 +33,7 @@
         public void CannotGetItemFromBufferWithAlreadyProcessedItem()
         {
             // arrange
-            OrderedBuffer.Item item;
+            OrderedItem item;
 
             // act
             this.buffer.Add(1, "value");
@@ -49,7 +49,7 @@
         {
             // arrange
             var expectedValue = "expected";
-            OrderedBuffer.Item item;
+            OrderedItem item;
 
             // act
             this.buffer.Add(1, "value");
@@ -69,7 +69,7 @@
         {
             // arrange
             var expectedValue = "expected";
-            OrderedBuffer.Item item;
+            OrderedItem item;
 
             // act
             this.buffer.Add(1, "value");
@@ -91,8 +91,8 @@
         {
             // arrange
             var expectedValue = "expected";
-            OrderedBuffer.Item item;
-            OrderedBuffer.Item otherItem;
+            OrderedItem item;
+            OrderedItem otherItem;
 
             // act
             this.buffer.Add(1, "value");
@@ -116,7 +116,7 @@
         {
             // arrange
             var expectedValue = "expected";
-            OrderedBuffer.Item item;
+            OrderedItem item;
 
             // act
             this.buffer.Add(1, "value");
@@ -142,7 +142,7 @@
         {
             // arrange
             var expectedValue = "expected";
-            OrderedBuffer.Item item;
+            OrderedItem item;
             var token = new CancellationToken();
 
             // act
@@ -167,7 +167,7 @@
         {
             // arrange
             var takeComplete = new ManualResetEvent(false);
-            OrderedBuffer.Item item = null;
+            OrderedItem item = null;
             var tokenSource = new CancellationTokenSource();
 
             // act
