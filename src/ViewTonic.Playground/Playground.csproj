@@ -4,15 +4,17 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{59396320-B973-4C3A-A0D5-FBA23CF6C73C}</ProjectGuid>
-    <OutputType>Library</OutputType>
+    <ProjectGuid>{58E3FDF9-860E-4415-9071-2863B344DB9F}</ProjectGuid>
+    <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>ViewTonic</RootNamespace>
-    <AssemblyName>ViewTonic</AssemblyName>
+    <RootNamespace>Playground</RootNamespace>
+    <AssemblyName>Playground</AssemblyName>
     <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -20,9 +22,9 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
-    <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -31,33 +33,29 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="..\CommonAssemblyInfo.cs">
-      <Link>Properties\CommonAssemblyInfo.cs</Link>
-    </Compile>
-    <Compile Include="EventDispatcher.cs" />
-    <Compile Include="Sdk\OrderedEventDispatcher.cs" />
-    <Compile Include="Guard.cs" />
-    <Compile Include="GuardExtensions.cs" />
-    <Compile Include="Sdk\IOrderedBuffer.cs" />
-    <Compile Include="Sdk\IntelligentOrderedBuffer.cs" />
-    <Compile Include="Sdk\ConcurrentHashSet.cs" />
-    <Compile Include="Sdk\DefaultSequenceResolver.cs" />
-    <Compile Include="Sdk\DefaultEventDispatcher.cs" />
-    <Compile Include="IEventDispatcher.cs" />
-    <Compile Include="ISequenceResolver.cs" />
-    <Compile Include="Persistence\IRepository.cs" />
-    <Compile Include="Persistence\Memory\MemoryRepository.cs" />
-    <Compile Include="Sdk\OrderedBuffer.cs" />
-    <Compile Include="Sdk\OrderedItem.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Persistence\Hybrid\HybridRepository.cs" />
-    <Compile Include="View.cs" />
-  </ItemGroup>
-  <ItemGroup>
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="packages.config" />
+    <Compile Include="Data\Thing.cs" />
+    <Compile Include="Data\Things.cs" />
+    <Compile Include="Events\ThingUpdated.cs" />
+    <Compile Include="Events\ThingDeleted.cs" />
+    <Compile Include="Events\ThingCreated.cs" />
+    <Compile Include="Program.cs" />
+    <Compile Include="Views\Thing.cs" />
+    <Compile Include="Views\Things.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\ViewTonic\ViewTonic.csproj">
+      <Project>{59396320-b973-4c3a-a0d5-fba23cf6c73c}</Project>
+      <Name>ViewTonic</Name>
+    </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Properties\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

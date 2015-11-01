@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ViewTonic.Tests", "tests\Vi
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Tests", "Tests", "{1C386755-64B6-4923-B775-BBA0F81FFA09}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Playground", "ViewTonic.Playground\Playground.csproj", "{58E3FDF9-860E-4415-9071-2863B344DB9F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{4E90E205-47C4-46E1-A206-5008788F0B52}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{4E90E205-47C4-46E1-A206-5008788F0B52}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{4E90E205-47C4-46E1-A206-5008788F0B52}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58E3FDF9-860E-4415-9071-2863B344DB9F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58E3FDF9-860E-4415-9071-2863B344DB9F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58E3FDF9-860E-4415-9071-2863B344DB9F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58E3FDF9-860E-4415-9071-2863B344DB9F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
