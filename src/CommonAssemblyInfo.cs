@@ -1,4 +1,4 @@
-﻿// <copyright file="CommonAssemblyInfo.cs" company="ViewTonic contributors">
+// <copyright file="CommonAssemblyInfo.cs" company="ViewTonic contributors">
 //  Copyright (c) ViewTonic contributors. All rights reserved.
 // </copyright>
 

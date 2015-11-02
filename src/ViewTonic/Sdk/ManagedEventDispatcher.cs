@@ -22,11 +22,8 @@ namespace ViewTonic.Sdk
 
         private readonly IOrderedBuffer buffer;
 
-
         private bool isDisposed;
         
-        private long sequenceNumber;
-
         public ManagedEventDispatcher(
             IEnumerable<View> views, 
             ISequenceResolver sequenceResolver, 

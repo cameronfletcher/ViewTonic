@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <metadata>
+    <id>ViewTonic</id>
+    <title>ViewTonic</title>
+    <version>0.0.1</version>
+    <authors>Cameron Fletcher, 
+ViewTonic contributors</authors>
+    <projectUrl>https://github.com/ViewTonic/ViewTonic/wiki</projectUrl>
+    <iconUrl>http://nuget.cameronfletcher.com/icons/ViewTonic.png</iconUrl>
+    <licenseUrl>https://raw.githubusercontent.com/ViewTonic/ViewTonic/dev/LICENSE.mit.txt</licenseUrl>
+    <requireLicenseAcceptance>false</requireLicenseAcceptance>
+    <description>A library for .NET that aims to remove some of the complexity from denormalization</description>
+    <releaseNotes>TBD</releaseNotes>
+    <copyright>Copyright (c) ViewTonic contributors.</copyright>
+    <tags>events event sourcing cqrs denomalize denormalizer denormalization views view tonic ViewTonic</tags>
+    <frameworkAssemblies>
+      <frameworkAssembly assemblyName="System" targetFramework="net45" />
+    </frameworkAssemblies>
+  </metadata>
+  <files>
+    <file src="bin\Release\ViewTonic.pdb" target="lib\net45" />
+  </files>
+</package>

@@ -64,7 +64,11 @@
     <Reference Include="System" />
   </ItemGroup>
   <ItemGroup>
+    <CodeAnalysisDictionary Include="..\ViewTonic.dictionary">
+      <Link>Properties\ViewTonic.dictionary</Link>
+    </CodeAnalysisDictionary>
     <None Include="packages.config" />
+    <None Include="ViewTonic.nuspec" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
