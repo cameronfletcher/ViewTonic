@@ -1,4 +1,8 @@
-﻿namespace ViewTonic.Tests.Unit
+﻿// <copyright file="IntelligentBufferTests.cs" company="ViewTonic contributors">
+//  Copyright (c) ViewTonic contributors. All rights reserved.
+// </copyright>
+
+namespace ViewTonic.Tests.Unit
 {
     using System.Globalization;
     using System.Threading;

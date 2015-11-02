@@ -9,7 +9,7 @@ namespace ViewTonic.Persistence.Hybrid
     using System.Threading;
     using ViewTonic.Sdk;
 
-    public sealed class HybridRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>
+    public sealed class HybridRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>, ISnapshotRepository
         where TEntity : class
     {
         private readonly Memory.MemoryRepository<TIdentity, TEntity> workingCache = new Memory.MemoryRepository<TIdentity, TEntity>();
@@ -22,7 +22,7 @@ namespace ViewTonic.Persistence.Hybrid
 
         private readonly IRepository<TIdentity, TEntity> repository;
 
-        private bool isFlushingCache;
+        private bool snapshotMode;
 
         public HybridRepository(IRepository<TIdentity, TEntity> repository)
         {
@@ -54,7 +54,7 @@ namespace ViewTonic.Persistence.Hybrid
 
         public void AddOrUpdate(TIdentity identity, TEntity entity)
         {
-            if (this.isFlushingCache)
+            if (this.snapshotMode)
             {
                 this.@lock.EnterReadLock();
 
@@ -78,7 +78,7 @@ namespace ViewTonic.Persistence.Hybrid
 
         public void Remove(TIdentity identity)
         {
-            if (this.isFlushingCache)
+            if (this.snapshotMode)
             {
                 this.@lock.EnterReadLock();
 
@@ -99,14 +99,22 @@ namespace ViewTonic.Persistence.Hybrid
             }
         }
 
-        public void Flush()
+        public void TakeSnapshot()
         {
-            if (this.isFlushingCache)
+            if (this.snapshotMode)
             {
-                throw new InvalidOperationException("Already flushing cache.");
+                throw new InvalidOperationException("Already in snapshot mode.");
             }
 
-            this.isFlushingCache = true;
+            this.snapshotMode = true;
+        }
+
+        public void FlushSnapshot()
+        {
+            if (!this.snapshotMode)
+            {
+                throw new InvalidOperationException("Can only flush cache in snapshot mode.");
+            }
 
             // NOTE (Cameron): This is a potentially long-running operation...
             this.repository.BulkUpdate(this.workingCache.GetAll(), this.removedFromWorkingCache);
@@ -129,7 +137,7 @@ namespace ViewTonic.Persistence.Hybrid
                 this.@lock.ExitWriteLock();
             }
 
-            this.isFlushingCache = false;
+            this.snapshotMode = false;
         }
 
         public void Purge()

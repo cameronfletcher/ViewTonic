@@ -4,33 +4,43 @@
 
 namespace ViewTonic.Sdk
 {
+    using System;
+    using System.Collections.Generic;
     using System.Threading;
-    using ViewTonic.Sdk;
+    using System.Threading.Tasks;
 
-    public sealed class OrderedEventDispatcher : IEventDispatcher
+    public class OrderedEventDispatcher : IEventDispatcher, IDisposable
     {
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+        private readonly IEventDispatcher innerEventDispatcher;
         private readonly ISequenceResolver sequenceResolver;
         private readonly IOrderedBuffer buffer;
-        private readonly IEventDispatcher innerEventDispatcher;
 
         private bool isDisposed;
 
-        public OrderedEventDispatcher(ISequenceResolver sequenceResolver, IOrderedBuffer buffer, IEventDispatcher innerEventDispatcher)
+        public OrderedEventDispatcher(IEventDispatcher innerEventDispatcher, ISequenceResolver sequenceResolver, IOrderedBuffer buffer)
         {
+            Guard.Against.Null(() => innerEventDispatcher);
             Guard.Against.Null(() => sequenceResolver);
             Guard.Against.Null(() => buffer);
-            Guard.Against.Null(() => sequenceResolver);
 
+            this.innerEventDispatcher = innerEventDispatcher;
             this.sequenceResolver = sequenceResolver;
             this.buffer = buffer;
-            this.innerEventDispatcher = innerEventDispatcher;
 
-            new Thread(this.Run).Start();
+            var task = new Task(() => this.Run(this.cancellationTokenSource.Token));
+            task.ContinueWith(t => this.cancellationTokenSource.Dispose(), TaskContinuationOptions.ExecuteSynchronously);
+            task.Start();
         }
 
         public void Dispatch(object @event)
         {
+            if (this.isDisposed)
+            {
+                throw new ObjectDisposedException(this.GetType().Name);
+            }
+
             var sequenceNumber = this.sequenceResolver.GetSequenceNumber(@event);
             this.buffer.Add(sequenceNumber, @event);
         }
@@ -43,14 +53,22 @@ namespace ViewTonic.Sdk
             }
 
             this.cancellationTokenSource.Cancel();
-            this.cancellationTokenSource.Dispose();
+            this.isDisposed = true;
         }
 
-        private void Run()
+        private void Run(CancellationToken token)
         {
             while (true)
             {
-                var item = this.buffer.Take(cancellationTokenSource.Token);
+                OrderedItem item = null;
+                try
+                {
+                    item = this.buffer.Take(token);
+                }
+                catch (OperationCanceledException)
+                {
+                    return;
+                }
 
                 // NOTE (Cameron): The items here are coming out of the buffer in the correct order.
                 this.innerEventDispatcher.Dispatch(item.Value);

@@ -12,7 +12,7 @@ namespace ViewTonic.Sdk
 
         public DefaultEventDispatcher(IEnumerable<View> views)
         {
-            Guard.Against.Null(() => views);
+            Guard.Against.NullOrEmptyOrNullElements(() => views);
 
             this.views = new List<View>(views);
         }

@@ -34,11 +34,16 @@
     <Compile Include="..\CommonAssemblyInfo.cs">
       <Link>Properties\CommonAssemblyInfo.cs</Link>
     </Compile>
+    <Compile Include="Configuration\Configuration.cs" />
     <Compile Include="EventDispatcher.cs" />
     <Compile Include="GuardExtensions.cs" />
+    <Compile Include="IEventResolver.cs" />
+    <Compile Include="Sdk\ISnapshotRepository.cs" />
+    <Compile Include="Sdk\ManagedEventDispatcher.cs" />
     <Compile Include="Sdk\OrderedEventDispatcher.cs" />
     <Compile Include="Guard.cs" />
     <Compile Include="Sdk\TypeExtensions.cs" />
+    <Compile Include="Sdk\SequenceInfo.cs" />
     <Compile Include="ViewTonicGuardExtensions.cs" />
     <Compile Include="Sdk\IOrderedBuffer.cs" />
     <Compile Include="Sdk\IntelligentOrderedBuffer.cs" />

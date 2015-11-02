@@ -34,6 +34,7 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Feature\EventDispatching.cs" />
     <Compile Include="Sdk\BufferTests.cs" />
     <Compile Include="Unit\HybridRepositoryTests.cs" />
     <Compile Include="Unit\MemoryRepositoryTests.cs" />

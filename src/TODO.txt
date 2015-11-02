@@ -1,0 +1,14 @@
+StyleCop
+TeamCity build
+Code Analysis
+Remove playground
+
+Implement:
+DefaultSequenceResolver
+
+Add feature tests:
+DefaultEventDispatcher
+OrderedEventDispatcher
+
+
+

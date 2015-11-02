@@ -1,4 +1,8 @@
-﻿namespace ViewTonic.Tests.Sdk
+﻿// <copyright file="RepositoryTests.cs" company="ViewTonic contributors">
+//  Copyright (c) ViewTonic contributors. All rights reserved.
+// </copyright>
+
+namespace ViewTonic.Tests.Sdk
 {
     using System;
     using FluentAssertions;

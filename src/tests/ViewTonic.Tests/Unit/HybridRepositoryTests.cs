@@ -1,13 +1,18 @@
-﻿namespace ViewTonic.Tests.Unit
+﻿// <copyright file="HybridRepositoryTests.cs" company="ViewTonic contributors">
+//  Copyright (c) ViewTonic contributors. All rights reserved.
+// </copyright>
+
+namespace ViewTonic.Tests.Unit
 {
-    using ViewTonic.Persistence.Hybrid;
-    using ViewTonic.Persistence.Memory;
-    using Xunit;
-    using FluentAssertions;
-    using ViewTonic.Persistence;
     using System.Collections.Generic;
     using System.Threading;
+    using System.Threading.Tasks;
+    using FluentAssertions;
+    using ViewTonic.Persistence;
+    using ViewTonic.Persistence.Hybrid;
+    using ViewTonic.Persistence.Memory;
     using ViewTonic.Tests.Sdk;
+    using Xunit;
 
     public class HybridRepositoryTests : RepositoryTests
     {
@@ -88,7 +93,13 @@
             hybridRepository.AddOrUpdate(Update, "update_changed");
             hybridRepository.Remove(Remove);
 
-            new Thread(() => hybridRepository.Flush()).Start();
+            new Task(
+                () =>
+                {
+                    hybridRepository.TakeSnapshot();
+                    hybridRepository.FlushSnapshot();
+                }).Start();
+
             flush.WaitOne();
 
             // NOTE (Cameron): The hybrid repository is now in a 'flushing' state
@@ -120,7 +131,13 @@
             hybridRepository.AddOrUpdate(Update, "update_changed");
             hybridRepository.Remove(Remove);
 
-            new Thread(() => hybridRepository.Flush()).Start();
+            new Task(
+                () =>
+                {
+                    hybridRepository.TakeSnapshot();
+                    hybridRepository.FlushSnapshot();
+                }).Start();
+
             flush.WaitOne();
 
             // NOTE (Cameron): The hybrid repository is now in a 'flushing' state
@@ -148,7 +165,13 @@
             injectedRepository.AddOrUpdate(Remove, "remove");
 
             // act
-            new Thread(() => hybridRepository.Flush()).Start();
+            new Task(
+                () =>
+                {
+                    hybridRepository.TakeSnapshot();
+                    hybridRepository.FlushSnapshot();
+                }).Start();
+
             flush.WaitOne();
 
             // NOTE (Cameron): The hybrid repository is now in a 'flushing' state
@@ -182,7 +205,8 @@
             hybridRepository.AddOrUpdate(Add, "add");
             hybridRepository.AddOrUpdate(Update, "update_changed");
             hybridRepository.Remove(Remove);
-            hybridRepository.Flush();
+            hybridRepository.TakeSnapshot();
+            hybridRepository.FlushSnapshot();
 
             var add = injectedRepository.Get(Add);
             var update = injectedRepository.Get(Update);
@@ -208,7 +232,8 @@
             hybridRepository.AddOrUpdate(Add, "add");
             hybridRepository.AddOrUpdate(Update, "update_changed");
             hybridRepository.Remove(Remove);
-            hybridRepository.Flush();
+            hybridRepository.TakeSnapshot();
+            hybridRepository.FlushSnapshot();
 
             var add = injectedRepository.Get(Add);
             var update = injectedRepository.Get(Update);
@@ -232,10 +257,11 @@
             injectedRepository.AddOrUpdate("A", "A");
             injectedRepository.AddOrUpdate("B", "B");
 
-            new Thread(
+            new Task(
                 () =>
                 {
-                    hybridRepository.Flush();
+                    hybridRepository.TakeSnapshot();
+                    hybridRepository.FlushSnapshot();
                     flushEnd.Set();
                 }).Start();
             
@@ -289,7 +315,8 @@
             hybridRepository.Get("C").Should().Be("C_changed", "ref20");
             hybridRepository.Get("D").Should().Be("D", "ref21");
 
-            hybridRepository.Flush();
+            hybridRepository.TakeSnapshot();
+            hybridRepository.FlushSnapshot();
             flushContinue.Set();
             flushEnd.WaitOne();
 

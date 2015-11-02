@@ -1,7 +1,12 @@
-﻿namespace ViewTonic.Tests.Unit
+﻿// <copyright file="BufferTests.cs" company="ViewTonic contributors">
+//  Copyright (c) ViewTonic contributors. All rights reserved.
+// </copyright>
+
+namespace ViewTonic.Tests.Unit
 {
     using System;
     using System.Threading;
+    using System.Threading.Tasks;
     using FluentAssertions;
     using ViewTonic.Sdk;
     using Xunit;
@@ -146,7 +151,7 @@
             var token = new CancellationToken();
 
             // act
-            new Thread(
+            new Task(
                 () =>
                 {
                     this.buffer.Add(1, "value");
@@ -171,7 +176,7 @@
             var tokenSource = new CancellationTokenSource();
 
             // act
-            new Thread(
+            new Task(
                 () =>
                 {
                     try

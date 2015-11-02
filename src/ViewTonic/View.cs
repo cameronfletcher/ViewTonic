@@ -47,6 +47,11 @@ namespace ViewTonic
             this.Dispatch(this, @event);
         }
 
+        internal void Flush()
+        {
+
+        }
+
         private void Dispatch(object target, object @event)
         {
             Guard.Against.Null(() => target);

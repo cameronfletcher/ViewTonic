@@ -17,6 +17,8 @@ namespace ViewTonic.Sdk
         private readonly int publisherTimeout;
         private readonly int consumerTimeout;
 
+        private bool isDisposed;
+
         public IntelligentOrderedBuffer(long sequenceNumber, Func<long, object> resolver, int publisherTimeout, int consumerTimeout)
             : base(sequenceNumber)
         {
@@ -40,6 +42,11 @@ namespace ViewTonic.Sdk
 
         public override bool TryTake(out OrderedItem value)
         {
+            if (this.isDisposed)
+            {
+                throw new ObjectDisposedException(this.GetType().Name);
+            }
+
             var success = base.TryTake(out value);
             if (success)
             {
@@ -51,10 +58,13 @@ namespace ViewTonic.Sdk
 
         public void Dispose()
         {
-            if (this.timer != null)
+            if (this.isDisposed)
             {
-                this.timer.Dispose();
+                return;
             }
+
+            this.timer.Dispose();
+            this.isDisposed = true;
         }
 
         private void EnsureSmoothRunning(object state)
