@@ -13,7 +13,21 @@ namespace ViewTonic.Sdk
     // LINK (Cameron): http://stackoverflow.com/questions/4306936/how-to-implement-concurrenthashset-in-net
     public sealed class ConcurrentSet<T> : ISet<T>, ICollection<T>, IEnumerable<T>, IEnumerable
     {
-        private readonly ConcurrentDictionary<T, byte> dictionary = new ConcurrentDictionary<T, byte>();
+        private readonly ConcurrentDictionary<T, byte> dictionary;
+        private readonly IEqualityComparer<T> equalityComparer;
+
+        public ConcurrentSet()
+            : this(EqualityComparer<T>.Default)
+        {
+        }
+
+        public ConcurrentSet(IEqualityComparer<T> equalityComparer)
+        {
+            Guard.Against.Null(() => equalityComparer);
+
+            this.dictionary = new ConcurrentDictionary<T, byte>(equalityComparer);
+            this.equalityComparer = equalityComparer;
+        }
 
         public bool Add(T item)
         {
@@ -37,7 +51,7 @@ namespace ViewTonic.Sdk
             var enumerable = other as IList<T> ?? other.ToArray();
             foreach (var item in this)
             {
-                if (!enumerable.Contains(item))
+                if (!enumerable.Contains(item, this.equalityComparer))
                 {
                     this.TryRemove(item);
                 }
@@ -65,7 +79,7 @@ namespace ViewTonic.Sdk
             Guard.Against.Null(() => other);
 
             var enumerable = other as IList<T> ?? other.ToArray();
-            return this.AsParallel().All(enumerable.Contains);
+            return this.AsParallel().All(item => enumerable.Contains(item, this.equalityComparer));
         }
 
         public bool IsSupersetOf(IEnumerable<T> other)
