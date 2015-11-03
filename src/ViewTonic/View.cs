@@ -12,6 +12,7 @@ namespace ViewTonic
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Reflection.Emit;
+    using ViewTonic.Persistence;
     using ViewTonic.Sdk;
 
     public class View
@@ -19,6 +20,8 @@ namespace ViewTonic
         private static readonly string DefaultMethodName = GetDefaultMethodName();
 
         private readonly Dictionary<Type, List<Action<object, object>>> handlers;
+
+        private List<ISnapshotRepository> repositories;
 
         public View()
             : this(DefaultMethodName)
@@ -47,9 +50,44 @@ namespace ViewTonic
             this.Dispatch(this, @event);
         }
 
-        internal void Flush()
+        public void Snapshot()
         {
+            if (this.repositories == null)
+            {
+                this.repositories = this.GetType().GetTypeHierarchyUntil(typeof(View))
+                    .SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
+                    .Where(field => field.FieldType.IsSubclassOfRawGeneric(typeof(IRepository<,>)))
+                    .Select(field => field.GetValue(this))
+                    .Select(repository => repository as ISnapshotRepository)
+                    .ToList();
 
+                if (this.repositories.Any(repository => repository == null))
+                {
+                    throw new InvalidOperationException("One or more of the view repositories cannot be flushed.");
+                }
+            }
+
+            this.repositories.ForEach(repository => repository.TakeSnapshot());
+        }
+
+        public void Flush()
+        {
+            if (this.repositories == null)
+            {
+                this.repositories = this.GetType().GetTypeHierarchyUntil(typeof(View))
+                    .SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
+                    .Where(field => field.FieldType.IsSubclassOfRawGeneric(typeof(IRepository<,>)))
+                    .Select(field => field.GetValue(this))
+                    .Select(repository => repository as ISnapshotRepository)
+                    .ToList();
+
+                if (this.repositories.Any(repository => repository == null))
+                {
+                    throw new InvalidOperationException("One or more of the view repositories cannot be flushed.");
+                }
+            }
+
+            this.repositories.ForEach(repository => repository.FlushSnapshot());
         }
 
         private void Dispatch(object target, object @event)

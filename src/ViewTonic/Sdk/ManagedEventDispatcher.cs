@@ -16,19 +16,23 @@ namespace ViewTonic.Sdk
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         private readonly Dictionary<View, long> views;
+        private readonly Timer timer;
 
         private readonly ISequenceResolver sequenceResolver;
         private readonly IRepository<string, SequenceInfo> sequenceRepository;
+        private readonly int quietTimeTimeout;
 
         private readonly IOrderedBuffer buffer;
 
+        private long sequenceNumber;
         private bool isDisposed;
         
         public ManagedEventDispatcher(
             IEnumerable<View> views, 
             ISequenceResolver sequenceResolver, 
             IRepository<string, SequenceInfo> sequenceRepository,
-            Func<long, IOrderedBuffer> bufferFactory)
+            Func<long, IOrderedBuffer> bufferFactory,
+            int quietTimeTimeout)
         {
             Guard.Against.NullOrEmptyOrNullElements(() => views);
 
@@ -42,14 +46,18 @@ namespace ViewTonic.Sdk
 
             this.sequenceResolver = sequenceResolver;
             this.sequenceRepository = sequenceRepository;
+            this.quietTimeTimeout = quietTimeTimeout;
 
-            this.buffer = bufferFactory.Invoke(this.views.Values.Min());
+            this.sequenceNumber = this.views.Values.Min();
+
+            this.buffer = bufferFactory.Invoke(this.sequenceNumber);
 
             var task = new Task(() => this.Run(this.cancellationTokenSource.Token));
             task.ContinueWith(t => this.cancellationTokenSource.Dispose(), TaskContinuationOptions.ExecuteSynchronously);
             task.Start();
-        }
 
+            this.timer = new Timer(this.TimerCallback, null, this.quietTimeTimeout, Timeout.Infinite);
+        }
 
         public void Dispatch(object @event)
         {
@@ -103,39 +111,39 @@ namespace ViewTonic.Sdk
                     view.Impl.Apply(item.Value);
                 }
             }
-            
+
+            this.sequenceNumber = item.SequenceNumber;
+
             this.EndDispatch();
         }
 
         private void BeginDispatch()
         {
-            // stop timer
+            this.timer.Change(Timeout.Infinite, Timeout.Infinite);
         }
 
         private void EndDispatch()
         {
-            // start timer
+            this.timer.Change(this.quietTimeTimeout, Timeout.Infinite);
         }
 
-        private void TimerCallback()
+        private void TimerCallback(object state)
         {
             // take first view with lowest sequence number
-            var sequenceNumber = 0L;
-            View view = null;
-
-            // get all hybrid repositories
-            List<ISnapshotRepository> repositories = null;
+            var item = this.views
+                .Select(kvp => new { View = kvp.Key, SequenceNumber = kvp.Value })
+                .FirstOrDefault(view => view.SequenceNumber == views.Values.Min());
 
             // lock
             // wait until end dispatch is called - it may not be being called
             // snapshot
-            repositories.ForEach(repository => repository.TakeSnapshot());
+            item.View.Snapshot();
             // allow end dispatch to finish (if it's running)
             // unlock
 
-            this.sequenceRepository.AddOrUpdate(view.GetType().FullName, new SequenceInfo { SequenceNumber = 0L });
-            repositories.ForEach(repository => repository.FlushSnapshot());
-            this.sequenceRepository.AddOrUpdate(view.GetType().FullName, new SequenceInfo { SequenceNumber = sequenceNumber });
+            this.sequenceRepository.AddOrUpdate(item.View.GetType().FullName, new SequenceInfo { SequenceNumber = 0L });
+            item.View.Flush();
+            this.sequenceRepository.AddOrUpdate(item.View.GetType().FullName, new SequenceInfo { SequenceNumber = this.sequenceNumber });
 
             // save 
             // if no activity then continue with next view else return

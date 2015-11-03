@@ -47,7 +47,7 @@
     <Compile Include="ViewTonicGuardExtensions.cs" />
     <Compile Include="Sdk\IOrderedBuffer.cs" />
     <Compile Include="Sdk\IntelligentOrderedBuffer.cs" />
-    <Compile Include="Sdk\ConcurrentHashSet.cs" />
+    <Compile Include="Sdk\ConcurrentSet.cs" />
     <Compile Include="Sdk\DefaultSequenceResolver.cs" />
     <Compile Include="Sdk\DefaultEventDispatcher.cs" />
     <Compile Include="IEventDispatcher.cs" />

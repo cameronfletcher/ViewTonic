@@ -113,7 +113,7 @@ namespace ViewTonic.Persistence.Hybrid
         {
             if (!this.snapshotMode)
             {
-                throw new InvalidOperationException("Can only flush cache in snapshot mode.");
+                throw new InvalidOperationException("No snapshot to flush! Call TakeSnapshot() first.");
             }
 
             // NOTE (Cameron): This is a potentially long-running operation...

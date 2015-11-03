@@ -26,7 +26,6 @@ namespace ViewTonic.Sdk
             this.publisherTimeout = publisherTimeout;
             this.consumerTimeout = consumerTimeout;
 
-
             this.timer = new Timer(this.EnsureSmoothRunning, null, this.publisherTimeout, Timeout.Infinite);
         }
 

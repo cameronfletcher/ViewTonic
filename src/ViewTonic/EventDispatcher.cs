@@ -116,7 +116,7 @@ namespace ViewTonic
                 return new OrderedEventDispatcher(defaultEventDispatcher, sequenceResolver, bufferFactory(this.sequenceNumber));
             }
 
-            return new ManagedEventDispatcher(this.views, this.sequenceResolver, this.sequenceRepository, bufferFactory);
+            return new ManagedEventDispatcher(this.views, this.sequenceResolver, this.sequenceRepository, bufferFactory, 1000);
         }
     }
 }
