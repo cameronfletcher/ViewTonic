@@ -69,6 +69,12 @@
                 .SnapshotViewsUsing(snapshotRepository)
                 .Create();
 
+            var x = EventDispatcher
+                .ForViews(view1, view2)
+                .SequenceEventsUsing((ISequenceResolver)null).StartAtSequenceNumber(0)
+                .ResolveMissingEventsUsing((IEventResolver)null).OnStartupOnly()
+                .Create();
+
             var eventDispatcher = b; // defaultEventDispatcher;
 
             #endregion

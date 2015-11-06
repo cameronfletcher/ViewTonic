@@ -16,6 +16,8 @@ namespace ViewTonic.Configuration
 
         public interface EventSequencing : Complete
         {
+            EventSequencingOptions SequenceEventsUsing(Func<object, long> sequenceResolver);
+
             EventSequencingOptions SequenceEventsUsing(ISequenceResolver sequenceResolver);
 
             EventSequencingOptions SequenceEventsByProperty(string eventProperty);
@@ -31,10 +33,14 @@ namespace ViewTonic.Configuration
         public interface EventResolution : Complete
         {
             EventResolutionPublisherOptions ResolveMissingEventsUsing(Func<long, object> eventResolver);
+
+            EventResolutionPublisherOptions ResolveMissingEventsUsing(IEventResolver eventResolver);
         }
 
         public interface EventResolutionPublisherOptions
         {
+            Complete OnStartupOnly();
+
             EventResolutionConsumerOptions WithAPublisherTimeoutOf(int milliseconds);
         }
 

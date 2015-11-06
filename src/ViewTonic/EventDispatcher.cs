@@ -11,7 +11,7 @@ namespace ViewTonic
 
     public sealed class EventDispatcher : 
         Configure.EventSequencing,
-        Configure.EventSequencingOptions, 
+        Configure.EventSequencingOptions,
         Configure.EventResolution,
         Configure.EventResolutionPublisherOptions,
         Configure.EventResolutionConsumerOptions, 
@@ -41,6 +41,11 @@ namespace ViewTonic
                 views = views,
                 eventDispatcherType = typeof(DefaultEventDispatcher),
             };
+        }
+
+        public Configure.EventSequencingOptions SequenceEventsUsing(Func<object, long> sequenceResolver)
+        {
+            return null;
         }
 
         public Configure.EventSequencingOptions SequenceEventsUsing(ISequenceResolver sequenceResolver)
@@ -85,6 +90,11 @@ namespace ViewTonic
             return this;
         }
 
+        public Configure.EventResolutionPublisherOptions ResolveMissingEventsUsing(IEventResolver eventResolver)
+        {
+            throw new NotImplementedException();
+        }
+
         public Configure.EventResolutionConsumerOptions WithAPublisherTimeoutOf(int milliseconds)
         {
             this.publisherTimeout = milliseconds;
@@ -95,6 +105,11 @@ namespace ViewTonic
         {
             this.consumerTimeout = milliseconds;
             return this;
+        }
+
+        public Configure.Complete OnStartupOnly()
+        {
+            throw new NotImplementedException();
         }
 
         // TODO (Cameron): Consider how to handle disposable dependencies.
