@@ -7,13 +7,12 @@ namespace ViewTonic.Persistence.Hybrid
     using System;
     using System.Collections.Generic;
     using System.Threading;
+    using ViewTonic.Persistence.Memory;
     using ViewTonic.Sdk;
 
     public sealed class HybridRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>, ISnapshotRepository
         where TEntity : class
     {
-        private readonly Memory.MemoryRepository<TIdentity, TEntity> workingCache = new Memory.MemoryRepository<TIdentity, TEntity>();
-        private readonly Memory.MemoryRepository<TIdentity, TEntity> temporaryCache = new Memory.MemoryRepository<TIdentity, TEntity>();
         private readonly ConcurrentSet<TIdentity> removedFromWorkingCache = new ConcurrentSet<TIdentity>();
         private readonly ConcurrentSet<TIdentity> removedFromTemporaryCache = new ConcurrentSet<TIdentity>();
 
@@ -21,14 +20,23 @@ namespace ViewTonic.Persistence.Hybrid
         private readonly ReaderWriterLockSlim @lock = new ReaderWriterLockSlim();
 
         private readonly IRepository<TIdentity, TEntity> repository;
+        private readonly MemoryRepository<TIdentity, TEntity> workingCache;
+        private readonly MemoryRepository<TIdentity, TEntity> temporaryCache;
 
         private bool snapshotMode;
 
         public HybridRepository(IRepository<TIdentity, TEntity> repository)
+            : this(repository, EqualityComparer<TIdentity>.Default)
+        {
+        }
+
+        public HybridRepository(IRepository<TIdentity, TEntity> repository, IEqualityComparer<TIdentity> equalityComparer)
         {
             Guard.Against.Null(() => repository);
 
             this.repository = repository;
+            this.workingCache = new MemoryRepository<TIdentity, TEntity>(equalityComparer);
+            this.temporaryCache = new MemoryRepository<TIdentity, TEntity>(equalityComparer);
         }
 
         public TEntity Get(TIdentity identity)

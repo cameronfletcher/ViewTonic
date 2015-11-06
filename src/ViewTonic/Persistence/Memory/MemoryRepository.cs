@@ -10,7 +10,19 @@ namespace ViewTonic.Persistence.Memory
     public sealed class MemoryRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>
         where TEntity : class
     {
-        private readonly ConcurrentDictionary<TIdentity, TEntity> entities = new ConcurrentDictionary<TIdentity,TEntity>();
+        private readonly ConcurrentDictionary<TIdentity, TEntity> entities;
+
+        public MemoryRepository()
+            : this(EqualityComparer<TIdentity>.Default)
+        {
+        }
+
+        public MemoryRepository(IEqualityComparer<TIdentity> equalityComparer)
+        {
+            Guard.Against.Null(() => equalityComparer);
+
+            this.entities = new ConcurrentDictionary<TIdentity, TEntity>(equalityComparer);
+        }
 
         public TEntity Get(TIdentity identity)
         {
