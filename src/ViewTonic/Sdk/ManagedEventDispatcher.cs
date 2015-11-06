@@ -13,7 +13,11 @@ namespace ViewTonic.Sdk
 
     public sealed class ManagedEventDispatcher : IEventDispatcher
     {
+        private static readonly SequenceInfo ZeroSequenceInfo = new SequenceInfo { SequenceNumber = 0L };
+
         private readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
+
+        private readonly object @lock = new object();
 
         private readonly Dictionary<View, long> views;
         private readonly Timer timer;
@@ -25,6 +29,8 @@ namespace ViewTonic.Sdk
         private readonly IOrderedBuffer buffer;
 
         private long sequenceNumber;
+        private bool processingSnapshot;
+        private bool quietTimeDisturbed;
         private bool isDisposed;
         
         public ManagedEventDispatcher(
@@ -102,51 +108,68 @@ namespace ViewTonic.Sdk
 
         private void Dispatch(OrderedItem item)
         {
-            this.BeginDispatch();
+            this.timer.Change(Timeout.Infinite, Timeout.Infinite);
 
-            foreach (var view in views.Select(kvp => new { Impl = kvp.Key, SequenceNumber = kvp.Value }))
+            lock (this.@lock)
             {
-                if (item.SequenceNumber > view.SequenceNumber)
+                foreach (var view in views.Select(kvp => new { Impl = kvp.Key, SequenceNumber = kvp.Value }).AsParallel())
                 {
-                    view.Impl.Apply(item.Value);
+                    if (item.SequenceNumber > view.SequenceNumber)
+                    {
+                        view.Impl.Apply(item.Value);
+                    }
                 }
+
+                this.sequenceNumber = item.SequenceNumber;
             }
 
-            this.sequenceNumber = item.SequenceNumber;
-
-            this.EndDispatch();
-        }
-
-        private void BeginDispatch()
-        {
-            this.timer.Change(Timeout.Infinite, Timeout.Infinite);
-        }
-
-        private void EndDispatch()
-        {
-            this.timer.Change(this.quietTimeTimeout, Timeout.Infinite);
+            if (this.processingSnapshot)
+            {
+                this.quietTimeDisturbed = true;
+            }
+            else
+            {
+                this.timer.Change(this.quietTimeTimeout, Timeout.Infinite);
+            }
         }
 
         private void TimerCallback(object state)
         {
-            // take first view with lowest sequence number
-            var item = this.views
-                .Select(kvp => new { View = kvp.Key, SequenceNumber = kvp.Value })
-                .FirstOrDefault(view => view.SequenceNumber == views.Values.Min());
+            long snapshotSequenceNumber;
 
-            // lock
-            // wait until end dispatch is called - it may not be being called
-            // snapshot
-            item.View.Snapshot();
-            // allow end dispatch to finish (if it's running)
-            // unlock
+            var processedViews = new List<View>();
 
-            this.sequenceRepository.AddOrUpdate(item.View.GetType().FullName, new SequenceInfo { SequenceNumber = 0L });
-            item.View.Flush();
-            this.sequenceRepository.AddOrUpdate(item.View.GetType().FullName, new SequenceInfo { SequenceNumber = this.sequenceNumber });
+            while (processedViews.Count < this.views.Count)
+            {
+                this.processingSnapshot = true;
 
-            // save 
-            // if no activity then continue with next view else return
+                // take first view with lowest sequence number
+                var itemsInScope = this.views
+                    .Where(kvp => !processedViews.Contains(kvp.Key))
+                    .Select(kvp => new { View = kvp.Key, SequenceNumber = kvp.Value });
+
+                var item = itemsInScope
+                    .FirstOrDefault(view => view.SequenceNumber == itemsInScope.Min(x => x.SequenceNumber));
+
+                lock (this.@lock)
+                {
+                    item.View.Snapshot();
+                    snapshotSequenceNumber = this.sequenceNumber;
+                }
+
+                this.sequenceRepository.AddOrUpdate(item.View.GetType().FullName, ZeroSequenceInfo);
+                item.View.Flush();
+                this.sequenceRepository.AddOrUpdate(item.View.GetType().FullName, new SequenceInfo { SequenceNumber = snapshotSequenceNumber });
+
+                this.processingSnapshot = false;
+
+                if (this.quietTimeDisturbed)
+                {
+                    this.quietTimeDisturbed = false;
+                    this.timer.Change(this.quietTimeTimeout, Timeout.Infinite);
+                    return;
+                }
+            }
         }
     }
 }

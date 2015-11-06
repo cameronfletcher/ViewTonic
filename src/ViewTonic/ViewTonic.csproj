@@ -39,6 +39,7 @@
     <Compile Include="EventDispatcher.cs" />
     <Compile Include="GuardExtensions.cs" />
     <Compile Include="IEventResolver.cs" />
+    <Compile Include="Sdk\DefaultEventResolver.cs" />
     <Compile Include="Sdk\ISnapshotRepository.cs" />
     <Compile Include="Sdk\ManagedEventDispatcher.cs" />
     <Compile Include="Sdk\OrderedEventDispatcher.cs" />

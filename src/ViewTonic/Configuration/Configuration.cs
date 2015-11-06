@@ -32,21 +32,14 @@ namespace ViewTonic.Configuration
 
         public interface EventResolution : Complete
         {
-            EventResolutionPublisherOptions ResolveMissingEventsUsing(Func<long, object> eventResolver);
+            EventResolutionOptions ResolveMissingEventsUsing(Func<long, object> eventResolver);
 
-            EventResolutionPublisherOptions ResolveMissingEventsUsing(IEventResolver eventResolver);
+            EventResolutionOptions ResolveMissingEventsUsing(IEventResolver eventResolver);
         }
 
-        public interface EventResolutionPublisherOptions
+        public interface EventResolutionOptions
         {
-            Complete OnStartupOnly();
-
-            EventResolutionConsumerOptions WithAPublisherTimeoutOf(int milliseconds);
-        }
-
-        public interface EventResolutionConsumerOptions
-        {
-            Complete AndAConsumerTimeoutOf(int milliseconds);
+            Complete WithATimeoutOf(int milliseconds);
         }
 
         public interface Complete

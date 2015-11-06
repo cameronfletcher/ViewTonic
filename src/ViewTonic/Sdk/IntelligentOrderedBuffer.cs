@@ -13,20 +13,24 @@ namespace ViewTonic.Sdk
         private readonly HashSet<long> buffer = new HashSet<long>();
         private readonly Timer timer;
 
-        private readonly Func<long, object> resolver;
-        private readonly int publisherTimeout;
-        private readonly int consumerTimeout;
+        private readonly IEventResolver eventResolver;
+        private readonly int timeout;
 
         private bool isDisposed;
 
-        public IntelligentOrderedBuffer(long sequenceNumber, Func<long, object> resolver, int publisherTimeout, int consumerTimeout)
+        public IntelligentOrderedBuffer(long sequenceNumber, Func<long, object> eventResolver, int timeout)
+            : this(sequenceNumber, new DefaultEventResolver(eventResolver), timeout)
+        {
+        }
+
+        public IntelligentOrderedBuffer(long sequenceNumber, IEventResolver eventResolver, int timeout)
             : base(sequenceNumber)
         {
-            this.resolver = resolver;
-            this.publisherTimeout = publisherTimeout;
-            this.consumerTimeout = consumerTimeout;
+            this.eventResolver = eventResolver;
+            this.timeout = timeout;
 
-            this.timer = new Timer(this.EnsureSmoothRunning, null, this.publisherTimeout, Timeout.Infinite);
+            // NOTE (Cameron): This will immediately resolve all missing events from the specified sequence number (eg. event re-playing).
+            this.timer = new Timer(this.EnsureSmoothRunning, null, 0, Timeout.Infinite);
         }
 
         protected override void ItemAddedToBuffer(long sequenceNumber)
@@ -49,7 +53,7 @@ namespace ViewTonic.Sdk
             var success = base.TryTake(out value);
             if (success)
             {
-                this.timer.Change(this.consumerTimeout, Timeout.Infinite);
+                this.timer.Change(this.timeout, Timeout.Infinite);
             }
 
             return success;
@@ -79,7 +83,7 @@ namespace ViewTonic.Sdk
             object item;
             do
             {
-                item = this.resolver.Invoke(sequenceNumber);
+                item = this.eventResolver.GetEvent(sequenceNumber);
                 if (item != null)
                 {
                     this.Add(sequenceNumber, item);
@@ -88,7 +92,7 @@ namespace ViewTonic.Sdk
             }
             while (item != null && !this.buffer.Contains(sequenceNumber));
 
-            this.timer.Change(this.publisherTimeout, Timeout.Infinite);
+            this.timer.Change(this.timeout, Timeout.Infinite);
         }
     }
 }

@@ -13,17 +13,15 @@ namespace ViewTonic
         Configure.EventSequencing,
         Configure.EventSequencingOptions,
         Configure.EventResolution,
-        Configure.EventResolutionPublisherOptions,
-        Configure.EventResolutionConsumerOptions, 
+        Configure.EventResolutionOptions,
         Configure.Complete
     {
         private View[] views;
         private ISequenceResolver sequenceResolver;
+        private IEventResolver eventResolver;
         private long sequenceNumber;
         private IRepository<string, SequenceInfo> sequenceRepository;
-        private Func<long, object> eventResolver;
-        private int publisherTimeout;
-        private int consumerTimeout;
+        private int eventResolverTimeout;
 
         private Type eventDispatcherType;
         private Type bufferType;
@@ -45,7 +43,7 @@ namespace ViewTonic
 
         public Configure.EventSequencingOptions SequenceEventsUsing(Func<object, long> sequenceResolver)
         {
-            return null;
+            return this.SequenceEventsUsing(new DefaultSequenceResolver(sequenceResolver));
         }
 
         public Configure.EventSequencingOptions SequenceEventsUsing(ISequenceResolver sequenceResolver)
@@ -81,7 +79,12 @@ namespace ViewTonic
             return this;
         }
 
-        public Configure.EventResolutionPublisherOptions ResolveMissingEventsUsing(Func<long, object> eventResolver)
+        public Configure.EventResolutionOptions ResolveMissingEventsUsing(Func<long, object> eventResolver)
+        {
+            return this.ResolveMissingEventsUsing(new DefaultEventResolver(eventResolver));
+        }
+
+        public Configure.EventResolutionOptions ResolveMissingEventsUsing(IEventResolver eventResolver)
         {
             Guard.Against.Null(() => eventResolver);
 
@@ -90,26 +93,10 @@ namespace ViewTonic
             return this;
         }
 
-        public Configure.EventResolutionPublisherOptions ResolveMissingEventsUsing(IEventResolver eventResolver)
+        public Configure.Complete WithATimeoutOf(int milliseconds)
         {
-            throw new NotImplementedException();
-        }
-
-        public Configure.EventResolutionConsumerOptions WithAPublisherTimeoutOf(int milliseconds)
-        {
-            this.publisherTimeout = milliseconds;
+            this.eventResolverTimeout = milliseconds;
             return this;
-        }
-
-        public Configure.Complete AndAConsumerTimeoutOf(int milliseconds)
-        {
-            this.consumerTimeout = milliseconds;
-            return this;
-        }
-
-        public Configure.Complete OnStartupOnly()
-        {
-            throw new NotImplementedException();
         }
 
         // TODO (Cameron): Consider how to handle disposable dependencies.
@@ -124,7 +111,7 @@ namespace ViewTonic
 
             Func<long, IOrderedBuffer> bufferFactory = number => typeof(OrderedBuffer).Equals(this.bufferType)
                 ? new OrderedBuffer(number)
-                : new IntelligentOrderedBuffer(number, this.eventResolver, this.publisherTimeout, this.consumerTimeout);
+                : new IntelligentOrderedBuffer(number, this.eventResolver, this.eventResolverTimeout);
 
             if (this.eventDispatcherType.Equals(typeof(OrderedEventDispatcher)))
             {

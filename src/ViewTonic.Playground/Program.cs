@@ -7,6 +7,7 @@
     using ViewTonic.Sdk;
     using System.Linq;
     using ViewTonic.Persistence.Hybrid;
+    using System.Threading;
 
     internal class Program
     {
@@ -72,7 +73,7 @@
             var x = EventDispatcher
                 .ForViews(view1, view2)
                 .SequenceEventsUsing((ISequenceResolver)null).StartAtSequenceNumber(0)
-                .ResolveMissingEventsUsing((IEventResolver)null).OnStartupOnly()
+                .ResolveMissingEventsUsing((IEventResolver)null).WithATimeoutOf(Timeout.Infinite)
                 .Create();
 
             var eventDispatcher = b; // defaultEventDispatcher;
