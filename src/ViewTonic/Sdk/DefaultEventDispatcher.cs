@@ -5,6 +5,7 @@
 namespace ViewTonic.Sdk
 {
     using System.Collections.Generic;
+    using System.Linq;
 
     public sealed class DefaultEventDispatcher : IEventDispatcher
     {
@@ -19,10 +20,7 @@ namespace ViewTonic.Sdk
 
         public void Dispatch(object @event)
         {
-            foreach (var view in views)
-            {
-                view.Apply(@event);
-            }
+            views.AsParallel().ForAll(view => view.Apply(@event));
         }
     }
 }

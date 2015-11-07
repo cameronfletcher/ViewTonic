@@ -11,19 +11,13 @@ namespace ViewTonic.Tests.Unit
     using ViewTonic.Persistence;
     using ViewTonic.Persistence.Hybrid;
     using ViewTonic.Persistence.Memory;
-    using ViewTonic.Tests.Sdk;
     using Xunit;
 
-    public class HybridRepositoryTests : RepositoryTests
+    public class HybridRepositoryTests
     {
         private const string Add = "ADD";
         private const string Update = "UPDATE";
         private const string Remove = "REMOVE";
-
-        public HybridRepositoryTests()
-            : base(new HybridRepository<string, string>(new MemoryRepository<string, string>()))
-        {
-        }
 
         [Fact]
         public void CanGetWithNoInjectedDataAndNoLongRunningFlushing()

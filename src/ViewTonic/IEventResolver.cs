@@ -4,8 +4,10 @@
 
 namespace ViewTonic
 {
+    using System.Collections.Generic;
+
     public interface IEventResolver
     {
-        object GetEvent(long sequenceNumber);
+        IEnumerable<object> GetEventsFrom(long sequenceNumber);
     }
 }

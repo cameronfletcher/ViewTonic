@@ -10,6 +10,11 @@ namespace ViewTonic.Sdk
     {
         private readonly Func<object, long> sequenceResolver;
 
+        public DefaultSequenceResolver(string eventPropertyName)
+        {
+            throw new NotImplementedException();
+        }
+        
         public DefaultSequenceResolver(Func<object, long> sequenceResolver)
         {
             Guard.Against.Null(() => sequenceResolver);
@@ -17,9 +22,9 @@ namespace ViewTonic.Sdk
             this.sequenceResolver = sequenceResolver;
         }
 
-        public long GetSequenceNumber(object message)
+        public long GetSequenceNumber(object eventPayload)
         {
-            return this.sequenceResolver.Invoke(message);
+            return this.sequenceResolver.Invoke(eventPayload);
         }
     }
 }

@@ -7,6 +7,7 @@ namespace ViewTonic.Tests.Sdk
     using System;
     using FluentAssertions;
     using ViewTonic.Persistence;
+    using ViewTonic.Persistence.Hybrid;
     using ViewTonic.Persistence.Memory;
     using Xunit;
 
@@ -17,6 +18,22 @@ namespace ViewTonic.Tests.Sdk
         protected RepositoryTests(IRepository<string, string> repository)
         {
             this.repository = repository;
+        }
+
+        public class MemoryRepository : RepositoryTests
+        {
+            public MemoryRepository()
+                : base(new MemoryRepository<string, string>())
+            {
+            }
+        }
+
+        public class HybridRepository : RepositoryTests
+        {
+            public HybridRepository()
+                : base(new HybridRepository<string, string>(new MemoryRepository<string, string>()))
+            {
+            }
         }
 
         [Fact]

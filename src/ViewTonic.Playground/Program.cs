@@ -8,6 +8,7 @@
     using System.Linq;
     using ViewTonic.Persistence.Hybrid;
     using System.Threading;
+    using ViewTonic.Runtime;
 
     internal class Program
     {
@@ -32,49 +33,50 @@
             };
 
             var sequenceResolver = new CustomSequenceResolver();
-            var snapshotRepository = new MemoryRepository<string, SequenceInfo>();
+            var snapshotRepository = new MemoryRepository<string, Snapshot>();
 
             #region WireUp
 
-            //var x = EventDispatcher
-            //    .ForViews(view1, view2)
-            //    .Create();
-
-            //var y = EventDispatcher
-            //    .ForViews(view1, view2)
-            //    .SequenceEventsUsing(sequenceResolver)
-            //        .StartAtSequenceNumber(0)
-            //    .Create();
-
-            //var z = EventDispatcher
-            //    .ForViews(view1, view2)
-            //    .SequenceEventsUsing(sequenceResolver)
-            //        .StartAtSequenceNumber(1)
-            //    .ResolveMissingEventsUsing(null)
-            //        .WithAPublisherTimeoutOf(500)
-            //        .AndAConsumerTimeoutOf(500)
-            //    .Create();
-
-            //var a = EventDispatcher
-            //    .ForViews(view1, view2)
-            //    .SequenceEventsUsing(sequenceResolver)
-            //    .SnapshotViewsUsing(snapshotRepository)
-            //    .ResolveMissingEventsUsing(n => events.SingleOrDefault(e => sequenceResolver.GetSequenceNumber(e) == n))
-            //        .WithAPublisherTimeoutOf(500)
-            //        .AndAConsumerTimeoutOf(500)
-            //    .Create();
-
-            var b = EventDispatcher
+            var x = ViewManager
                 .ForViews(view1, view2)
-                .SequenceEventsUsing(sequenceResolver)
-                .SnapshotViewsUsing(snapshotRepository)
                 .Create();
 
-            var x = EventDispatcher
+            var y = ViewManager
                 .ForViews(view1, view2)
-                .SequenceEventsUsing((ISequenceResolver)null).StartAtSequenceNumber(0)
+                .OrderEventsUsing(sequenceResolver).StartAtSequenceNumber(0)
+                .Create();
+
+            var z = ViewManager
+                .ForViews(view1, view2)
+                .OrderEventsUsing(sequenceResolver).StartAtSequenceNumber(1)
                 .ResolveMissingEventsUsing((IEventResolver)null).WithATimeoutOf(Timeout.Infinite)
                 .Create();
+
+            var b = ViewManager
+                .ForViews(view1, view2)
+                .OrderEventsUsing(sequenceResolver)
+                .SnapshotViewsUsing(snapshotRepository).WithAQuietTimeTimeoutOf(Timeout.Infinite)
+                .Create();
+
+            var a = ViewManager
+                .ForViews(view1, view2)
+                .OrderEventsUsing(sequenceResolver)
+                .ResolveMissingEventsUsing(n => events.Where(e => sequenceResolver.GetSequenceNumber(e) >= n).OrderBy(o => o)).WithATimeoutOf(Timeout.Infinite)
+                .SnapshotViewsUsing(snapshotRepository).WithAQuietTimeTimeoutOf(Timeout.Infinite)
+                .Create();
+
+            //// should not be allowed
+            //var c = ViewManager
+            //    .ForViews(view1, view2)
+            //    .OrderEventsUsing(sequenceResolver)
+            //    .Create();
+
+            //var d = ViewManager
+            //    .ForViews(view1, view2)
+            //    .OrderEventsUsing(sequenceResolver)
+            //    .ResolveMissingEventsUsing(n => events.SingleOrDefault(e => sequenceResolver.GetSequenceNumber(e) == n)).WithATimeoutOf(Timeout.Infinite)
+            //    .Create();
+
 
             var eventDispatcher = b; // defaultEventDispatcher;
 
@@ -82,7 +84,7 @@
 
             foreach (var @event in events.Where(e => !new long[] { 2, 6 }.Contains(sequenceResolver.GetSequenceNumber(e))))
             {
-                eventDispatcher.Dispatch(@event);
+                eventDispatcher.QueueForDispatch(@event);
             }
 
             Console.ReadLine();
