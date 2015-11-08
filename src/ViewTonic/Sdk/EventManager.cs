@@ -223,7 +223,7 @@ namespace ViewTonic.Sdk
             }
         }
 
-        private class NullSequenceResolver : ISequenceResolver
+        internal class NullSequenceResolver : ISequenceResolver
         {
             private long sequenceNumber = 1L;
 
@@ -233,7 +233,7 @@ namespace ViewTonic.Sdk
             }
         }
 
-        private class NullEventResolver : IEventResolver
+        internal class NullEventResolver : IEventResolver
         {
             public IEnumerable<object> GetEventsFrom(long sequenceNumber)
             {

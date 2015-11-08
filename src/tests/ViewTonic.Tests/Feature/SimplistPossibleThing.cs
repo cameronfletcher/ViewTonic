@@ -13,7 +13,7 @@ namespace ViewTonic.Tests.Feature
     public class SimplistPossibleThing
     {
         [Scenario]
-        public void Example01(
+        public void DispatchingAnEvent(
             IRepository<string, SomeEvent> repository,
             View view,
             IViewManager viewManager,

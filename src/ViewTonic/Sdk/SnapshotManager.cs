@@ -56,9 +56,10 @@ using ViewTonic.Runtime;
             }
         }
 
-        private void Save()
+        // HACK (Cameron): Mess.
+        public long LowestPersistedSequenceNumber
         {
-            this.snapshots.Values.ToList().ForEach(snapshot => this.snapshotRepository.AddOrUpdate(snapshot.ViewName, snapshot));
+            get { return this.snapshots.Values.Min(x => x.PersistedSequenceNumber); }
         }
 
         public void Dispose()

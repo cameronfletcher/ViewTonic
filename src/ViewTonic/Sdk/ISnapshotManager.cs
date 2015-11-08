@@ -6,6 +6,8 @@ namespace ViewTonic.Sdk
 {
     public interface ISnapshotManager
     {
+        long LowestPersistedSequenceNumber { get; }
+
         void Dispatch(Event @event);
     }
 }

@@ -29,10 +29,7 @@ namespace ViewTonic
         private IRepository<string, Snapshot> snapshotRepository;
         private int eventResolverTimeout;
         private int quietTimeTimeout;
-        private IEventBuffer eventBuffer;
-
-        private Type eventDispatcherType;
-        private Type bufferType;
+        private long sequenceNumber;
 
         private ViewManager()
         {
@@ -55,7 +52,9 @@ namespace ViewTonic
 
         private ViewManager StartAtSequenceNumber(long sequenceNumber)
         {
-            this.eventBuffer = new EventBuffer(sequenceNumber);
+            Guard.Against.Negative(() => sequenceNumber);
+
+            this.sequenceNumber = sequenceNumber;
             return this;
         }
 
@@ -151,43 +150,25 @@ namespace ViewTonic
             return this.WithAQuietTimeTimeoutOf(seconds);
         }
 
-        // TODO (Cameron): Consider how to handle disposable dependencies.
         IViewManager Configuration.Complete.Create()
         {
             if (this.sequenceResolver == null)
             {
-                return new DefaultViewManager(new EventManager(), new SnapshotManager(views), true);
+                return new DefaultViewManager(new EventManager(), new SnapshotManager(this.views), true);
             }
 
-            //var defaultEventDispatcher = new DefaultEventDispatcher(this.views);
+            var snapshotManager = this.snapshotRepository == null
+                ? new SnapshotManager(this.views)
+                : new SnapshotManager(this.views, this.snapshotRepository, this.quietTimeTimeout);
 
-            //if (typeof(DefaultEventDispatcher).Equals(this.eventDispatcherType))
-            //{
-            //    return defaultEventDispatcher;
-            //}
+            // HACK (Cameron): Massive, massive hack.
+            var eventBuffer = this.snapshotRepository == null
+                ? new EventBuffer(this.sequenceNumber)
+                : new EventBuffer(snapshotManager.LowestPersistedSequenceNumber);
 
-            //Func<long, IOrderedBuffer> bufferFactory = number => typeof(OrderedBuffer).Equals(this.bufferType)
-            //    ? new OrderedBuffer(number)
-            //    : new IntelligentOrderedBuffer(number, this.eventResolver, this.eventResolverTimeout);
-
-            //if (this.eventDispatcherType.Equals(typeof(OrderedEventDispatcher)))
-            //{
-            //    return new OrderedEventDispatcher(defaultEventDispatcher, sequenceResolver, bufferFactory(this.sequenceNumber));
-            //}
-
-            //return new ManagedEventDispatcher(this.views, this.sequenceResolver, this.sequenceRepository, bufferFactory, this.snapshotQuietTimeTimeout);
-
-            var eventManager = new EventManager(
-                this.sequenceResolver, 
-                this.eventResolver, 
-                this.eventResolverTimeout,
-                this.eventBuffer ?? new EventBuffer(),
-                true);
-
-            var snapshotManager = new SnapshotManager(
-                this.views,
-                this.snapshotRepository,
-                this.quietTimeTimeout);
+            var eventManager = this.eventResolver == null
+                ? new EventManager(this.sequenceResolver, new EventManager.NullEventResolver(), Timeout.Infinite, eventBuffer, true)
+                : new EventManager(this.sequenceResolver, this.eventResolver, this.eventResolverTimeout, eventBuffer, true);
 
             return new DefaultViewManager(eventManager, snapshotManager);
         }

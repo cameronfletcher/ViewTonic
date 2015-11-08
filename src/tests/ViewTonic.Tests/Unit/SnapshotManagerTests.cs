@@ -124,9 +124,9 @@ namespace ViewTonic.Tests.Unit
                 // act
                 var preSnapshotEvent = repository.Get(secondEvent.Id);
                 repository.WaitUntilSnapshotSaveStarted();
+                repository.WaitUntilSnapshotSaveEnded();
                 snapshotManager.Dispatch(new Event { SequenceNumber = 2, Payload = secondEvent });
 
-                repository.WaitUntilSnapshotSaveEnded();
                 repository.WaitUntilSnapshotSaveEnded();
                 var postSnapshotEvent = repository.Get(secondEvent.Id);
 

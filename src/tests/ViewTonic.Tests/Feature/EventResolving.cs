@@ -1,159 +1,173 @@
-﻿//// <copyright file="EventResolving.cs" company="ViewTonic contributors">
-////  Copyright (c) ViewTonic contributors. All rights reserved.
-//// </copyright>
+﻿// <copyright file="SimplistPossibleThing.cs" company="ViewTonic contributors">
+//  Copyright (c) ViewTonic contributors. All rights reserved.
+// </copyright>
 
-//namespace ViewTonic.Tests.Feature
-//{
-//    using System.Collections.Generic;
-//    using System.Threading;
-//    using FluentAssertions;
-//    using ViewTonic.Persistence;
-//    using ViewTonic.Persistence.Memory;
-//    using ViewTonic.Sdk;
-//    using Xbehave;
+namespace ViewTonic.Tests.Feature
+{
+    using System.Collections.Generic;
+    using System.Linq;
+    using System.Threading;
+    using FluentAssertions;
+    using ViewTonic.Persistence;
+    using ViewTonic.Persistence.Memory;
+    using Xbehave;
 
-//    // NOTE (Cameron): Event replaying *only* ever occurs on startup.
-//    public class EventResolving
-//    {
-//        [Scenario]
-//        public void CanEventReplayOnCleanStartupWithNoEvents(
-//            Dictionary<long, SomeEvent> eventStore,
-//            IRepository<long, SomeEvent> viewRepository,
-//            View view,
-//            IViewManager viewManager)
-//        {
-//            var currentSequenceNumber = 0L;
+    public class EventResolving
+    {
+        [Scenario]
+        public void EventReplayingOnStartUp(
+            List<SomeEvent> eventStore,
+            IRepository<string, SomeData> repository,
+            View view,
+            ISequenceResolver sequenceResolver,
+            IEventResolver eventResolver,
+            IViewManager viewManager)
+        {
+            "Given an event store with three events"._(() => eventStore = 
+                new List<SomeEvent>
+                {
+                    new SomeEvent { Sequence = 1, Id = "test" },
+                    new SomeEvent { Sequence = 2, Id = "test2" },
+                    new SomeEvent { Sequence = 3, Id = "test3" },
+                });
+            "and a view repository"._(() => repository = new MemoryRepository<string, SomeData>());
+            "and a view"._(() => view = new SomeView(repository));
+            "and a sequence resolver"._(() => sequenceResolver = new CustomSequenceResolver());
+            "and an event resolver"._(() => eventResolver = new CustomEventResolver(eventStore));
+            "when a view manager is created"._(ctx => viewManager =
+                ViewManager.ForViews(view)
+                    .OrderEventsUsing(sequenceResolver).StartAtSequenceNumber(0)
+                    .ResolveMissingEventsUsing(eventResolver).WithATimeoutOf(Timeout.Infinite)
+                    .Create().Using(ctx));
+            "and the operation is given time to process"._(() => Thread.Sleep(1000));
+            "then the view received the third event last"._(() => repository.Get("root").LastEventId.Should().Be(eventStore[2].Id));
+            "and the view received three events"._(() => repository.Get("root").EventCount.Should().Be(3));
+        }
 
-//            "Given an empty event store"._(() => eventStore = new Dictionary<long, SomeEvent>());
+        [Scenario]
+        public void EventReplayingFromNonZeroOnStartUp(
+            List<SomeEvent> eventStore,
+            IRepository<string, SomeData> repository,
+            View view,
+            ISequenceResolver sequenceResolver,
+            IEventResolver eventResolver,
+            IViewManager viewManager)
+        {
+            "Given an event store with three events"._(() => eventStore =
+                new List<SomeEvent>
+                {
+                    new SomeEvent { Sequence = 1, Id = "test" },
+                    new SomeEvent { Sequence = 2, Id = "test2" },
+                    new SomeEvent { Sequence = 3, Id = "test3" },
+                    new SomeEvent { Sequence = 4, Id = "test4" },
+                });
+            "and a view repository"._(() => repository = new MemoryRepository<string, SomeData>());
+            "and a view"._(() => view = new SomeView(repository));
+            "and a sequence resolver"._(() => sequenceResolver = new CustomSequenceResolver());
+            "and an event resolver"._(() => eventResolver = new CustomEventResolver(eventStore));
+            "when a view manager is created"._(ctx => viewManager =
+                ViewManager.ForViews(view)
+                    .OrderEventsUsing(sequenceResolver).StartAtSequenceNumber(2)
+                    .ResolveMissingEventsUsing(eventResolver).WithATimeoutOf(Timeout.Infinite)
+                    .Create().Using(ctx));
+            "and the operation is given time to process"._(() => Thread.Sleep(1000));
+            "then the view received the third event last"._(() => repository.Get("root").LastEventId.Should().Be(eventStore[3].Id));
+            "and the view received three events"._(() => repository.Get("root").EventCount.Should().Be(2));
+        }
 
-//            "and a view repository"._(() => viewRepository = new MemoryRepository<long, SomeEvent>());
+        [Scenario]
+        public void EventReplayingFromNonZeroOnStartUpWithDuplicateBufferedMessages(
+            List<SomeEvent> eventStore,
+            IRepository<string, SomeData> repository,
+            View view,
+            ISequenceResolver sequenceResolver,
+            IEventResolver eventResolver,
+            IViewManager viewManager)
+        {
+            "Given an event store with three events"._(() => eventStore =
+                new List<SomeEvent>
+                {
+                    new SomeEvent { Sequence = 1, Id = "test" },
+                    new SomeEvent { Sequence = 2, Id = "test2" },
+                    new SomeEvent { Sequence = 3, Id = "test3" },
+                    new SomeEvent { Sequence = 4, Id = "test4" },
+                });
+            "and a view repository"._(() => repository = new MemoryRepository<string, SomeData>());
+            "and a view"._(() => view = new SomeView(repository));
+            "and a sequence resolver"._(() => sequenceResolver = new CustomSequenceResolver());
+            "and an event resolver"._(() => eventResolver = new CustomEventResolver(eventStore));
+            "when a view manager is created"._(ctx => viewManager =
+                ViewManager.ForViews(view)
+                    .OrderEventsUsing(sequenceResolver).StartAtSequenceNumber(2)
+                    .ResolveMissingEventsUsing(eventResolver).WithATimeoutOf(Timeout.Infinite)
+                    .Create().Using(ctx));
+            "and an old message has been buffered"._(() => viewManager.QueueForDispatch(eventStore[2]));
+            "and the operation is given time to process"._(() => Thread.Sleep(1000));
+            "then the view received the third event last"._(() => repository.Get("root").LastEventId.Should().Be(eventStore[3].Id));
+            "and the view received three events"._(() => repository.Get("root").EventCount.Should().Be(2));
+        }
 
-//            "and a view"._(() => view = new SomeView(viewRepository));
+        public class SomeView : View
+        {
+            private readonly IRepository<string, SomeData> repository;
 
-//            "When an event dispatcher is created"._(
-//                () => viewManager =
-//                    ViewManager.ForViews(view)
-//                    //.SequenceEventsByProperty("SequenceNumber")
-//                        .OrderEventsUsing(@event => ++currentSequenceNumber)
-//                            .StartAtSequenceNumber(0)
-//                        .ResolveMissingEventsUsing(
-//                            sequenceNumber =>
-//                            {
-//                                SomeEvent @event;
-//                                return eventStore.TryGetValue(sequenceNumber, out @event) ? @event : null;
-//                            })
-//                            .WithATimeoutOf(Timeout.Infinite)
-//                        .Create());
+            private int eventCount;
 
-//            "Then"._(() =>
-//            {
-//                // ???
-//            });
-//        }
+            public SomeView(IRepository<string, SomeData> repository)
+            {
+                this.repository = repository;
+            }
 
-//        [Scenario]
-//        public void CanEventReplayOnCleanStartup(
-//            Dictionary<long, SomeEvent> eventStore,
-//            IRepository<long, SomeEvent> viewRepository,
-//            View view,
-//            IViewManager viewManager)
-//        {
-//            var currentSequenceNumber = 0L;
+            public void Consume(SomeEvent @event)
+            {
+                this.eventCount++;
 
-//            "Given an event store"._(
-//                () => eventStore = 
-//                    new Dictionary<long, SomeEvent>
-//                    {
-//                        { 1, new SomeEvent { SequenceNumber = 1, Value = "event1" } },
-//                        { 2, new SomeEvent { SequenceNumber = 2, Value = "event2" } },
-//                    });
+                this.repository.AddOrUpdate(
+                    "root",
+                    new SomeData
+                    {
+                        LastEventId = @event.Id,
+                        EventCount = eventCount,
+                    });
+            }
+        }
 
-//            "and a view repository"._(() => viewRepository = new MemoryRepository<long, SomeEvent>());
+        public class SomeEvent
+        {
+            public int Sequence { get; set; }
 
-//            "and a view"._(() => view = new SomeView(viewRepository));
+            public string Id { get; set; }
+        }
 
-//            "When an event dispatcher is created"._(
-//                () => viewManager = 
-//                    ViewManager.ForViews(view)
-//                        //.SequenceEventsByProperty("SequenceNumber")
-//                        .OrderEventsUsing(@event => ++currentSequenceNumber)
-//                            .StartAtSequenceNumber(0)
-//                        .ResolveMissingEventsUsing(
-//                            sequenceNumber => 
-//                            {
-//                                SomeEvent @event;
-//                                return eventStore.TryGetValue(sequenceNumber, out @event) ? @event : null;
-//                            })
-//                            .WithATimeoutOf(Timeout.Infinite)
-//                        .Create());
+        public class SomeData
+        {
+            public string LastEventId { get; set; }
 
-//            "Then"._(() => 
-//                {
-//                    var event1 = viewRepository.Get(1);
-//                    event1.Should().NotBeNull();
-//                    event1.Should().BeOfType<SomeEvent>();
-//                    event1.As<SomeEvent>().SequenceNumber.Should().Be(1);
-//                    event1.As<SomeEvent>().Value.Should().Be("event1");
+            public int EventCount { get; set; }
+        }
 
-//                    var event2 = viewRepository.Get(2);
-//                    event2.Should().NotBeNull();
-//                    event2.Should().BeOfType<SomeEvent>();
-//                    event2.As<SomeEvent>().SequenceNumber.Should().Be(2);
-//                    event2.As<SomeEvent>().Value.Should().Be("event2");
-//                });
-//        }
+        private class CustomSequenceResolver : ISequenceResolver
+        {
+            public long GetSequenceNumber(object eventPayload)
+            {
+                var @event = (SomeEvent)eventPayload;
+                return @event.Sequence;
+            }
+        }
 
-//        public void CanEventReplayOnDirtyStartup()
-//        {
-//        }
+        private class CustomEventResolver : IEventResolver
+        {
+            private List<SomeEvent> eventStore;
 
-//        public void CanEventReplayOnStartupWithBufferedMessages()
-//        {
-//        }
+            public CustomEventResolver(List<SomeEvent> eventStore)
+            {
+                this.eventStore = eventStore;
+            }
 
-//        public void CanEventReplayOnStartupWithDuplicateBufferedMessages()
-//        {
-//        }
-
-//        public void CanEventReplayOnStartupWithMissingBufferedMessages()
-//        {
-//        }
-
-//        public void CanEventReplayWhilstRunning()
-//        {
-//            // to include event replay status with notification
-//        }
-
-//        // basic
-
-//        // sequenced
-
-//        // sequenced with resolver
-
-//        // (managed) sequenced
-
-//        // (managed) sequenced with resolver
-
-//        public class SomeView : View
-//        {
-//            private readonly IRepository<long, SomeEvent> repository;
-
-//            public SomeView(IRepository<long, SomeEvent> repository)
-//            {
-//                this.repository = repository;
-//            }
-
-//            public void Consume(SomeEvent @event)
-//            {
-//                this.repository.AddOrUpdate(@event.SequenceNumber, @event);
-//            }
-//        }
-
-//        public class SomeEvent
-//        {
-//            public long SequenceNumber { get; set; }
-
-//            public string Value { get; set; }
-//        }
-//    }
-//}
+            public IEnumerable<object> GetEventsFrom(long sequenceNumber)
+            {
+                return this.eventStore.Skip((int)sequenceNumber - 1);
+            }
+        }
+    }
+}
