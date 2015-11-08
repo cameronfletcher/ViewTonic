@@ -6,6 +6,6 @@ namespace ViewTonic
 {
     public interface ISequenceResolver
     {
-        long GetSequenceNumber(object message);
+        long GetSequenceNumber(object eventPayload);
     }
 }

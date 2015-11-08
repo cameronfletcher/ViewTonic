@@ -7,7 +7,7 @@ namespace ViewTonic.Persistence.Memory
     using System.Collections.Concurrent;
     using System.Collections.Generic;
 
-    public sealed class MemoryRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>
+    public class MemoryRepository<TIdentity, TEntity> : IRepository<TIdentity, TEntity>
         where TEntity : class
     {
         private readonly ConcurrentDictionary<TIdentity, TEntity> entities;
@@ -24,34 +24,34 @@ namespace ViewTonic.Persistence.Memory
             this.entities = new ConcurrentDictionary<TIdentity, TEntity>(equalityComparer);
         }
 
-        public TEntity Get(TIdentity identity)
+        public virtual TEntity Get(TIdentity identity)
         {
             TEntity entity;
             return this.entities.TryGetValue(identity, out entity) ? entity : default(TEntity);
         }
 
-        public IEnumerable<KeyValuePair<TIdentity, TEntity>> GetAll()
+        public virtual IEnumerable<KeyValuePair<TIdentity, TEntity>> GetAll()
         {
             return this.entities;
         }
 
-        public void AddOrUpdate(TIdentity identity, TEntity entity)
+        public virtual void AddOrUpdate(TIdentity identity, TEntity entity)
         {
             this.entities.AddOrUpdate(identity, entity, (i, e) => entity);
         }
 
-        public void Remove(TIdentity identity)
+        public virtual void Remove(TIdentity identity)
         {
             TEntity entity;
             this.entities.TryRemove(identity, out entity);
         }
 
-        public void Purge()
+        public virtual void Purge()
         {
             this.entities.Clear();
         }
 
-        public void BulkUpdate(IEnumerable<KeyValuePair<TIdentity, TEntity>> addOrUpdate, IEnumerable<TIdentity> remove)
+        public virtual void BulkUpdate(IEnumerable<KeyValuePair<TIdentity, TEntity>> addOrUpdate, IEnumerable<TIdentity> remove)
         {
             foreach (var item in addOrUpdate)
             {

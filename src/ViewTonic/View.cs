@@ -8,11 +8,13 @@ namespace ViewTonic
     using System.CodeDom.Compiler;
     using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
+    using System.Globalization;
     using System.Linq;
     using System.Linq.Expressions;
     using System.Reflection;
     using System.Reflection.Emit;
     using ViewTonic.Persistence;
+    using ViewTonic.Persistence.Hybrid;
     using ViewTonic.Sdk;
 
     public class View
@@ -50,43 +52,38 @@ namespace ViewTonic
             this.Dispatch(this, @event);
         }
 
-        public void Snapshot()
+        internal void PrepareRepositoriesForSnapshotting()
         {
-            if (this.repositories == null)
+            if (this.repositories != null)
             {
-                this.repositories = this.GetType().GetTypeHierarchyUntil(typeof(View))
-                    .SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
-                    .Where(field => field.FieldType.IsSubclassOfRawGeneric(typeof(IRepository<,>)))
-                    .Select(field => field.GetValue(this))
-                    .Select(repository => repository as ISnapshotRepository)
-                    .ToList();
-
-                if (this.repositories.Any(repository => repository == null))
-                {
-                    throw new InvalidOperationException("One or more of the view repositories cannot be flushed.");
-                }
+                return;
             }
 
+            var repositoryInfo = this.GetType().GetTypeHierarchyUntil(typeof(View))
+                .SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
+                .Where(field => field.FieldType.IsSubclassOfRawGeneric(typeof(IRepository<,>)))
+                .Select(field => new { Field = field, Value = field.GetValue(this) });
+
+            repositoryInfo
+                .Where(info => !info.Value.GetType().IsSubclassOfRawGeneric(typeof(HybridRepository<,>)))
+                .ToList()
+                .ForEach(info =>
+                {
+                    var type = typeof(HybridRepository<,>).MakeGenericType(info.Field.FieldType.GenericTypeArguments);
+                    var repository = Activator.CreateInstance(type, new object[] { info.Value });
+                    info.Field.SetValue(this, repository, BindingFlags.Instance | BindingFlags.NonPublic, null, CultureInfo.InvariantCulture);
+                });
+
+            this.repositories = repositoryInfo.Select(info => (ISnapshotRepository)info.Value).ToList();
+        }
+
+        internal void Snapshot()
+        {
             this.repositories.ForEach(repository => repository.TakeSnapshot());
         }
 
-        public void Flush()
+        internal void Flush()
         {
-            if (this.repositories == null)
-            {
-                this.repositories = this.GetType().GetTypeHierarchyUntil(typeof(View))
-                    .SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
-                    .Where(field => field.FieldType.IsSubclassOfRawGeneric(typeof(IRepository<,>)))
-                    .Select(field => field.GetValue(this))
-                    .Select(repository => repository as ISnapshotRepository)
-                    .ToList();
-
-                if (this.repositories.Any(repository => repository == null))
-                {
-                    throw new InvalidOperationException("One or more of the view repositories cannot be flushed.");
-                }
-            }
-
             this.repositories.ForEach(repository => repository.FlushSnapshot());
         }
 

@@ -5,19 +5,20 @@
 namespace ViewTonic.Sdk
 {
     using System;
+    using System.Collections.Generic;
 
     public sealed class DefaultEventResolver : IEventResolver
     {
-        private readonly Func<long, object> eventResolver;
+        private readonly Func<long, IEnumerable<object>> eventResolver;
 
-        public DefaultEventResolver(Func<long, object> eventResolver)
+        public DefaultEventResolver(Func<long, IEnumerable<object>> eventResolver)
         {
             Guard.Against.Null(() => eventResolver);
 
             this.eventResolver = eventResolver;
         }
 
-        public object GetEvent(long sequenceNumber)
+        public IEnumerable<object> GetEventsFrom(long sequenceNumber)
         {
             return this.eventResolver.Invoke(sequenceNumber);
         }

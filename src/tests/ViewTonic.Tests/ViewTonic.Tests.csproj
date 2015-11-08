@@ -36,16 +36,20 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Feature\EventDispatching.cs" />
-    <Compile Include="Sdk\BufferTests.cs" />
+    <Compile Include="Feature\EventOrdering.cs" />
+    <Compile Include="Feature\EventResolving.cs" />
+    <Compile Include="Feature\SimplistPossibleThing.cs" />
+    <Compile Include="Feature\ViewPersistence.cs" />
+    <Compile Include="Sdk\EventListExtension.cs" />
+    <Compile Include="Sdk\EventStore.cs" />
+    <Compile Include="Sdk\TestOutputListener.cs" />
+    <Compile Include="Unit\EventBufferTests.cs" />
     <Compile Include="Unit\HybridRepositoryTests.cs" />
-    <Compile Include="Unit\MemoryRepositoryTests.cs" />
-    <Compile Include="Sdk\RepositoryTests.cs" />
-    <Compile Include="Unit\IntelligentBufferTests.cs" />
-    <Compile Include="Unit\OrderedBufferTests.cs" />
+    <Compile Include="Unit\RepositoryTests.cs" />
+    <Compile Include="Unit\EventManagerTests.cs" />
+    <Compile Include="Unit\SnapshotManagerTests.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="Persistence\" />
     <Folder Include="Properties\" />
   </ItemGroup>
   <ItemGroup>
@@ -63,6 +67,14 @@
     <Reference Include="System" />
     <Reference Include="System.Xml" />
     <Reference Include="System.Xml.Linq" />
+    <Reference Include="Xbehave.Core, Version=2.0.1.0, Culture=neutral, PublicKeyToken=e4957f48888f9fe8, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Xbehave.Core.2.0.1\lib\portable-net45\Xbehave.Core.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="Xbehave.Execution.desktop, Version=2.0.1.0, Culture=neutral, PublicKeyToken=e4957f48888f9fe8, processorArchitecture=MSIL">
+      <HintPath>..\..\..\packages\Xbehave.Core.2.0.1\lib\portable-net45\Xbehave.Execution.desktop.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
     <Reference Include="xunit.abstractions, Version=2.0.0.0, Culture=neutral, PublicKeyToken=8d05b1bb7a6fdb6c, processorArchitecture=MSIL">
       <HintPath>..\..\..\packages\xunit.abstractions.2.0.0\lib\net35\xunit.abstractions.dll</HintPath>
       <Private>True</Private>
