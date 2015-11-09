@@ -9,5 +9,7 @@ namespace ViewTonic.Sdk
         void TakeSnapshot();
 
         void FlushSnapshot();
+
+        void Purge();
     }
 }

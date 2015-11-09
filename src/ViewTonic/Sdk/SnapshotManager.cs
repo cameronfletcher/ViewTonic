@@ -78,6 +78,7 @@ using ViewTonic.Runtime;
             this.timer.Dispose();
         }
 
+        // TODO (Cameron): Purge repositories if sequence number is 1.
         public void Dispatch(Event @event)
         {
             Trace.WriteLine("SnapshotManager.Dispatch(Event @event)");
@@ -85,6 +86,20 @@ using ViewTonic.Runtime;
             if (this.isDisposed)
             {
                 throw new ObjectDisposedException(this.GetType().Name);
+            }
+
+            if (@event.SequenceNumber <= 0)
+            {
+                throw new NotSupportedException("Can only dispatch events with a sequence number of 1 or higher.");
+            }
+
+            // NOTE (Cameron): If we're on event #1 then the repositories should be empty.
+            if (@event.SequenceNumber == 1)
+            {
+                this.snapshots
+                    .AsParallel()
+                    .Select(x => x.Key)
+                    .ForAll(x => x.Purge());
             }
 
             lock (this.@lock)

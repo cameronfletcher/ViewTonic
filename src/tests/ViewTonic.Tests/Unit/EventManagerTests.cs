@@ -132,6 +132,9 @@ namespace ViewTonic.Tests.Unit
             {
                 var events = new List<Event>() { null /* compensate for non zero-based */ };
 
+                // HACK (Cameron): We should be able to remove this wait in the future...
+                Thread.Sleep(100);
+
                 // act
                 manager.ReplayEvents();
                 do

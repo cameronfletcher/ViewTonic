@@ -87,6 +87,18 @@ namespace ViewTonic
             this.repositories.ForEach(repository => repository.FlushSnapshot());
         }
 
+        internal void Purge()
+        {
+            // HACK (Cameron): This *probably* shouldn't work like this.
+            this.GetType().GetTypeHierarchyUntil(typeof(View))
+                .SelectMany(t => t.GetFields(BindingFlags.Instance | BindingFlags.NonPublic))
+                .Where(field => field.FieldType.IsSubclassOfRawGeneric(typeof(IRepository<,>)))
+                .Select(field => field.GetValue(this))
+                .ToList()
+                .ForEach(repository => 
+                    repository.GetType().InvokeMember("Purge", BindingFlags.Instance | BindingFlags.Public | BindingFlags.InvokeMethod, null, repository, new object[] { }));
+        }
+
         private void Dispatch(object target, object @event)
         {
             Guard.Against.Null(() => target);

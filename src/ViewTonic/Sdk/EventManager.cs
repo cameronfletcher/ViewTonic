@@ -145,6 +145,12 @@ namespace ViewTonic.Sdk
                 throw new ObjectDisposedException(this.GetType().Name);
             }
 
+            // NOTE (Cameron): This is not sufficient behaviour - we need to cancel and restart - will require another cancellation token methinks.
+            if (this.IsEventReplaying)
+            {
+                throw new NotSupportedException("Already replaying events!");
+            }
+
             Trace.WriteLine("EventManager.ReplayEvents: Timer.Change(Timeout.Infinite, Timeout.Infinite)");
             this.timer.Change(Timeout.Infinite, Timeout.Infinite);
 

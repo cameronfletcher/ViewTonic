@@ -9,5 +9,7 @@ namespace ViewTonic
     public interface IViewManager : IDisposable
     {
         void QueueForDispatch(object @event);
+
+        void TriggerEventReplaying();
     }
 }

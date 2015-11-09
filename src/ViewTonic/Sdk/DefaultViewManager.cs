@@ -41,6 +41,11 @@ namespace ViewTonic.Sdk
             this.eventManager.Add(@event);
         }
 
+        public void TriggerEventReplaying()
+        {
+            this.eventManager.ReplayEvents();
+        }
+
         public void Dispose()
         {
             if (this.isDisposed)
