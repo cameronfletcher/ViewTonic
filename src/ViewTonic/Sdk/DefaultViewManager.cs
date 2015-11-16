@@ -30,20 +30,36 @@ namespace ViewTonic.Sdk
 
             this.eventManager = eventManager;
             this.snapshotManager = snapshotManager;
+            this.disposeDependencies = disposeDependencies;
 
             var task = new Task(() => this.Run(this.cancellationTokenSource.Token));
             task.ContinueWith(t => this.cancellationTokenSource.Dispose(), TaskContinuationOptions.ExecuteSynchronously);
             task.Start();
         }
 
+        public bool IsEventReplaying
+        {
+            get { return this.eventManager.IsEventReplaying; }
+        }
+
         public void QueueForDispatch(object @event)
         {
+            if (this.isDisposed)
+            {
+                throw new ObjectDisposedException(this.GetType().Name);
+            }
+
             this.eventManager.Add(@event);
         }
 
         public void TriggerEventReplaying()
         {
-            this.eventManager.ReplayEvents();
+            if (this.isDisposed)
+            {
+                throw new ObjectDisposedException(this.GetType().Name);
+            }
+
+            this.eventManager.ReplayEvents(() => this.snapshotManager.ResetSnapshots());
         }
 
         public void Dispose()

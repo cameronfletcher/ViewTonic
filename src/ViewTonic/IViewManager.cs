@@ -11,5 +11,7 @@ namespace ViewTonic
         void QueueForDispatch(object @event);
 
         void TriggerEventReplaying();
+
+        bool IsEventReplaying { get; }
     }
 }

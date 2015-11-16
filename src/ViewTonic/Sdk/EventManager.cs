@@ -136,7 +136,7 @@ namespace ViewTonic.Sdk
             return this.eventBuffer.TryTake(out value);
         }
 
-        public void ReplayEvents()
+        public void ReplayEvents(Action replayAction)
         {
             Trace.WriteLine("EventManager.ReplayEvents()");
 
@@ -155,6 +155,9 @@ namespace ViewTonic.Sdk
             this.timer.Change(Timeout.Infinite, Timeout.Infinite);
 
             this.eventBuffer.Clear();
+
+            // HACK (Cameron): Horrible.
+            replayAction();
 
             this.IsEventReplaying = true;
             new Task(() => this.ResolveMissingEvents(this.cancellationTokenSource.Token)).Start();

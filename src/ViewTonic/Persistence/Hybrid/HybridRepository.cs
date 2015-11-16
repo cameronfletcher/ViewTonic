@@ -24,6 +24,7 @@ namespace ViewTonic.Persistence.Hybrid
         private readonly MemoryRepository<TIdentity, TEntity> temporaryCache;
 
         private bool snapshotMode;
+        private bool repositoryIsEmpty;
 
         public HybridRepository(IRepository<TIdentity, TEntity> repository)
             : this(repository, EqualityComparer<TIdentity>.Default)
@@ -57,7 +58,13 @@ namespace ViewTonic.Persistence.Hybrid
                 return null;
             }
 
-            return this.workingCache.Get(identity) ?? this.repository.Get(identity);
+            entity = this.workingCache.Get(identity);
+            if (entity != null)
+            {
+                return entity;
+            }
+
+            return this.repositoryIsEmpty ? null : this.repository.Get(identity);
         }
 
         public void AddOrUpdate(TIdentity identity, TEntity entity)
@@ -127,6 +134,7 @@ namespace ViewTonic.Persistence.Hybrid
             // NOTE (Cameron): This is a potentially long-running operation...
             this.repository.BulkUpdate(this.workingCache.GetAll(), this.removedFromWorkingCache);
 
+            this.repositoryIsEmpty = false;
             this.workingCache.Purge();
             this.removedFromWorkingCache.Clear();
 
@@ -157,6 +165,7 @@ namespace ViewTonic.Persistence.Hybrid
             this.removedFromTemporaryCache.Clear();
 
             this.repository.Purge();
+            this.repositoryIsEmpty = true;
         }
 
         public void BulkUpdate(IEnumerable<KeyValuePair<TIdentity, TEntity>> addOrUpdate, IEnumerable<TIdentity> remove)

@@ -16,6 +16,8 @@ namespace ViewTonic.Sdk
 
         private BlockingCollection<Event> queue = new BlockingCollection<Event>(100000);
 
+        private bool isDisposed;
+
         public EventBuffer()
             : this(0L)
         {
@@ -90,13 +92,11 @@ namespace ViewTonic.Sdk
 
             lock (this.@lock)
             {
-                this.buffer.Clear();
-
                 // LINK (Cameron): http://stackoverflow.com/questions/8001133/how-to-empty-a-blockingcollection
-                var oldQueue = this.queue;
-                this.queue = new BlockingCollection<Event>(100000);
-                oldQueue.Dispose();
-                
+                Event @event;
+                while (this.queue.TryTake(out @event)) ;
+
+                this.buffer.Clear();
                 this.NextSequenceNumber = 1L;
             }
         }
@@ -105,6 +105,12 @@ namespace ViewTonic.Sdk
         {
             Trace.WriteLine("EventBuffer: Dispose()");
 
+            if (this.isDisposed)
+            {
+                return;
+            }
+
+            this.isDisposed = true;
             this.queue.Dispose();
         }
     }

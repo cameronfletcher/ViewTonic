@@ -5,13 +5,13 @@
 namespace ViewTonic.Sdk
 {
     using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Threading;
-using ViewTonic.Persistence;
-using ViewTonic.Persistence.Memory;
-using ViewTonic.Runtime;
+    using System.Collections.Generic;
+    using System.Diagnostics;
+    using System.Linq;
+    using System.Threading;
+    using ViewTonic.Persistence;
+    using ViewTonic.Persistence.Memory;
+    using ViewTonic.Runtime;
 
     public sealed class SnapshotManager : ISnapshotManager, IDisposable
     {
@@ -204,6 +204,19 @@ using ViewTonic.Runtime;
             }
 
             this.isSnapshotting = false;
+        }
+
+        public void ResetSnapshots()
+        {
+            this.snapshots
+                .AsParallel()
+                .Select(x => x.Value)
+                .ForAll(
+                    snapshot =>
+                    {
+                        snapshot.PersistedSequenceNumber = snapshot.ProcessedSequenceNumber = 0;
+                        this.snapshotRepository.AddOrUpdate(snapshot.ViewName, snapshot);
+                    });
         }
     }
 }

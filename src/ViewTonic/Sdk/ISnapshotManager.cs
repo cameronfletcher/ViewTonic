@@ -9,5 +9,7 @@ namespace ViewTonic.Sdk
         long LowestPersistedSequenceNumber { get; }
 
         void Dispatch(Event @event);
+
+        void ResetSnapshots();
     }
 }

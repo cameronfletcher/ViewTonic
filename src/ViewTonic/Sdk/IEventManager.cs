@@ -4,6 +4,7 @@
 
 namespace ViewTonic.Sdk
 {
+    using System;
     using System.Threading;
 
     public interface IEventManager
@@ -16,6 +17,6 @@ namespace ViewTonic.Sdk
 
         bool TryTake(out Event value);
 
-        void ReplayEvents();
+        void ReplayEvents(Action replayAction);
     }
 }

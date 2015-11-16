@@ -136,7 +136,7 @@ namespace ViewTonic.Tests.Unit
                 Thread.Sleep(100);
 
                 // act
-                manager.ReplayEvents();
+                manager.ReplayEvents(() => { });
                 do
                 {
                     var @event = manager.Take(cts.Token);
